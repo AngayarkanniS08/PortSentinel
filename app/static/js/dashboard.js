@@ -49,8 +49,7 @@
                 logoutModal.classList.remove('active');
             });
             confirmLogoutBtn.addEventListener('click', () => {
-                console.log("Logout confirmed!"); // Inga real logout logic varum
-                logoutModal.classList.remove('active');
+                window.location.href = '/logout';
             });
             logoutModal.addEventListener('click', (e) => {
                 if (e.target === logoutModal) { // Overlay click panna close aagum
@@ -155,13 +154,51 @@
                 }
             }
             
+            // Intha function-ah PUDHUSA REPLACE PANNUNGA
             function addDetectionToTable(alert) {
-                const placeholder = detectionsTableBody.querySelector('td[colspan="4"]');
+                const placeholder = detectionsTableBody.querySelector('td[colspan="5"]');
                 if(placeholder) placeholder.parentElement.remove();
+
                 const newRow = detectionsTableBody.insertRow(0);
+                newRow.id = `detection-${alert.alert_id}`; // Row-ku oru unique ID kudukrom
+
                 const severityClass = alert.severity === 'High' ? 'text-red-400' : 'text-amber-400';
-                newRow.innerHTML = `<td class="font-mono">${alert.ip_address}</td> <td>${alert.scan_type}</td> <td><span class="${severityClass}">${alert.severity}</span></td> <td>Blocked</td>`;
-                if (detectionsTableBody.rows.length > 4) { detectionsTableBody.deleteRow(-1); }
+                const isBlocked = alert.is_blocked;
+                const statusText = isBlocked ? 'Blocked' : 'Detected';
+                const statusClass = isBlocked ? 'alert-critical' : 'alert-warning';
+                
+                // PUDHU HTML: Toggle switch-oda serthu create panrom
+                newRow.innerHTML = `
+                    <td class="font-mono">${alert.ip_address}</td>
+                    <td>${alert.scan_type}</td>
+                    <td><span class="${severityClass}">${alert.severity}</span></td>
+                    <td><span class="alert-badge ${statusClass}">${statusText}</span></td>
+                    <td>
+                        <label class="toggle-switch">
+                            <input type="checkbox" class="ip-toggle" data-ip="${alert.ip_address}" ${isBlocked ? 'checked' : ''}>
+                            <span class="slider"></span>
+                        </label>
+                    </td>`;
+
+                if (detectionsTableBody.rows.length > 10) { 
+                    detectionsTableBody.deleteRow(-1); 
+                }
+                
+                // Pudhusa create panna switch-ku event listener add panrom
+                addToggleListener(newRow.querySelector('.ip-toggle'));
+            }
+
+            // ITHA PUDHUSA ADD PANNUNGA
+            function addToggleListener(toggleElement) {
+                toggleElement.addEventListener('change', function () {
+                    const ip = this.dataset.ip;
+                    const action = this.checked ? 'block' : 'unblock';
+                    
+                    console.log(`Manual control: Requesting to ${action} IP ${ip}`);
+                    
+                    // Backend-ku 'manual_ip_control' event-ah anuprom
+                    socket.emit('manual_ip_control', { 'ip_address': ip, 'action': action });
+                });
             }
             
             function updateStats(stats){

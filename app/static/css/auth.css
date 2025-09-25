@@ -422,3 +422,13 @@ input::placeholder {
         display: none;
     }
 }
+/* --- ITHA PUDHUSA ADD PANNUNGA --- */
+/* Browser autofill style-ah override panra code */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+    -webkit-text-fill-color: hsl(var(--foreground)) !important; /* Text color-ah white aakkurom */
+    -webkit-box-shadow: 0 0 0 30px hsl(var(--form-input)) inset !important; /* Background-ah dark aakkurom */
+    background-clip: content-box !important; /* Sila browser-ku theva padum */
+}

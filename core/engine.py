@@ -100,23 +100,31 @@ class DetectionEngine:
             return None
 
     def trigger_alert(self, src_ip, ports_scanned):
-        """Trigger an alert for a detected scan"""
-        self.alert_count += 1
-        self.detected_ips.add(src_ip)
-        
-        alert_data = {
-            'alert_id': f"alert_{self.alert_count}",
-            'ip_address': src_ip,
-            'scan_type': 'SYN Scan',
-            'ports_scanned': ports_scanned,
-            'severity': 'High',
-            'is_blocked': False
-        }
-        
-        self.socketio.emit('new_alert', alert_data)
-        
-        if self.db:
-            self.db.add_detection(src_ip, 'SYN Scan', 'High')
+            """Trigger an alert and block the IP for a detected scan"""
+            self.alert_count += 1
+            self.detected_ips.add(src_ip)
             
-        print(f"ALERT: Port scan detected from {src_ip} on ports {ports_scanned}")
+            # --- PUDHU CHANGE: Inga thaan IP-ah block panrom ---
+            is_blocked_now = False
+            if self.firewall:
+                print(f"Handing over {src_ip} to the Firewall Manager...")
+                is_blocked_now = self.firewall.block_ip(src_ip)
 
+            alert_data = {
+                'alert_id': f"alert_{self.alert_count}",
+                'ip_address': src_ip,
+                'scan_type': 'SYN Scan',
+                'ports_scanned': ports_scanned,
+                'severity': 'High',
+                'is_blocked': is_blocked_now # Firewall block pannirucha-nu solrom
+            }
+            
+            self.socketio.emit('new_alert', alert_data)
+            
+            if self.db:
+                self.db.add_detection(src_ip, 'SYN Scan', 'High')
+                
+            if is_blocked_now:
+                print(f"ALERT & BLOCK: Port scan from {src_ip} has been blocked!")
+            else:
+                print(f"ALERT ONLY: Port scan detected from {src_ip}. Could not block.")

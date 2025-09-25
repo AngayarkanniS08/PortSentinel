@@ -32,9 +32,8 @@ class DatabaseHandler:
     Manages all database operations for the application.
     """
     def __init__(self, db_file):
-        self.engine = create_engine(f'sqlite:///{db_file}')
-        # Intha line users table and detections table, rendu table-aiyum create pannidum
-        Base.metadata.create_all(self.engine)
+        # db_file variable-laye ippo correct-ana full URL varum
+        self.engine = create_engine(db_file)
         self.Session = sessionmaker(bind=self.engine)
 
     def add_detection(self, ip, scan_type, severity):

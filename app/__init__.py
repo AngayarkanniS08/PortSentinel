@@ -1,18 +1,15 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template
 from flask_socketio import SocketIO
-from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-import bcrypt
+from flask_login import LoginManager, login_required, current_user
 
-# --- Project-oda மத்த files-ah import panrom ---
+# --- PUDHU CHANGE: Namma auth_routes file-ah import panrom ---
+from .auth_routes import init_auth_routes
 from .database import User
 
 socketio = SocketIO(async_mode='eventlet')
 login_manager = LoginManager()
 
 def create_app(sniffer=None, firewall=None, db=None, sys_monitor=None, interface_name=None):
-    """
-    Creates and configures the Flask application and its routes.
-    """
     app = Flask(__name__)
     app.config['SECRET_KEY'] = 'secret-key-for-port-sentinel'
     
@@ -23,69 +20,18 @@ def create_app(sniffer=None, firewall=None, db=None, sys_monitor=None, interface
     @login_manager.user_loader
     def load_user(user_id):
         return db.find_user_by_id(int(user_id))  # type: ignore
+        
+    # --- PUDHU CHANGE: Authentication routes-ah inga register panrom ---
+    # Ithu antha auth_routes.py file-la irukura ella routes-ayum activate pannidum
+    init_auth_routes(app, db)
 
-    # --- Routes ---
-
-    # --- FIX: Inga Decorator Order-ah Sari Panniyachu ---
+    # --- Routes (Dashboard mattum thaan inga irukkum) ---
     @app.route('/')
     @login_required 
     def index():
         return render_template('dashboard.html', username=current_user.username)
 
-    @app.route('/login', methods=['GET', 'POST'])
-    def login():
-        if request.method == 'POST':
-            email = request.form.get('email')
-            password = request.form.get('password')
-            
-            if not email or not password:
-                flash('Email and password renduமே aavasiyam.')
-                return redirect(url_for('login'))
-
-            user = db.find_user_by_email(email)  # type: ignore
-
-            if user and bcrypt.checkpw(password.encode('utf-8'), user.password_hash):
-                login_user(user)
-                return redirect(url_for('index'))
-            else:
-                flash('Email or password thappu. Sariya pottu paarunga.')
-                return redirect(url_for('login'))
-
-        return render_template('login.html')
-
-    @app.route('/register', methods=['GET', 'POST'])
-    def register():
-        if request.method == 'POST':
-            first_name = request.form.get('firstName')
-            last_name = request.form.get('lastName')
-            email = request.form.get('email')
-            password = request.form.get('password')
-
-            if not all([first_name, last_name, email, password]):
-                flash('Ella fields-um fill pannanum.')
-                return redirect(url_for('register'))
-
-            username = f"{first_name} {last_name}"
-            hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()) # type: ignore
-            
-            if db.find_user_by_email(email): # type: ignore
-                flash('Intha email already register aayirukku. Vera email use pannunga.')
-                return redirect(url_for('register'))
-
-            db.add_user(username, email, hashed_password)  # type: ignore
-            flash('Account create aayiduchu! Ippo login pannunga.')
-            return redirect(url_for('login'))
-
-        return render_template('register.html')
-
-    # --- FIX: Inga Decorator Order-ah Sari Panniyachu ---
-    @app.route('/logout')
-    @login_required
-    def logout():
-        logout_user()
-        return redirect(url_for('login'))
-        
-    # --- SocketIO Events (Ithula entha maathamum illa) ---
+    # --- SocketIO Events (Ithula entha maathamum illa, apdiye irukkattum) ---
     @socketio.on('connect')
     def handle_connect():
         print('Client connected')
@@ -110,6 +56,18 @@ def create_app(sniffer=None, firewall=None, db=None, sys_monitor=None, interface
             
         elif action == 'stop' and sniffer.is_running():
             sniffer.stop()
+
+    @socketio.on('manual_ip_control')
+    @login_required
+    def handle_manual_ip_control(data):
+        ip = data.get('ip_address')
+        action = data.get('action')
+        if not ip or not action or not firewall: return
+        print(f"Firewall: Received manual command to '{action}' IP: {ip}")
+        if action == 'block':
+            firewall.block_ip(ip)
+        elif action == 'unblock':
+            firewall.unblock_ip(ip)
 
     def send_stats_updates(sniffer, sys_monitor, interface_name):
         print("Stats update thread started.")

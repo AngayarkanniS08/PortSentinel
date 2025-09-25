@@ -23,13 +23,13 @@
             </nav>
 
 <div class="sidebar-footer">
-    <a href="{{ url_for('logout') }}" class="profile" style="text-decoration: none;">
+    <div class="profile" id="logout-button" style="cursor: pointer;">
         <div class="profile-avatar"><i class="fas fa-user"></i></div>
         <div class="profile-name">{{ username|title }}</div>
         <div style="margin-left: auto; padding-right: 12px; color: hsl(var(--muted-foreground));">
             <i class="fas fa-sign-out-alt"></i>
         </div>
-    </a>
+    </div>
 </div>
         </aside>
         
@@ -136,12 +136,12 @@
                         <div class="card-body">
                             <div class="table-container">
                                 <table>
-                                    <thead>
-                                        <tr><th>IP Address</th><th>Scan Type</th><th>Severity</th><th>Status</th></tr>
-                                    </thead>
-                                    <tbody id="detections-table-body">
-                                        <tr><td colspan="4" class="text-center p-8 text-slate-400">No detections yet.</td></tr>
-                                    </tbody>
+                                <thead>
+                                    <tr><th>IP Address</th><th>Scan Type</th><th>Severity</th><th>Status</th><th>Action</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td colspan="5" class="text-center p-8 text-slate-400">No detections yet.</td></tr>
+                                </tbody>
                                 </table>
                             </div>
                         </div>
