@@ -136,9 +136,15 @@
                         <div class="card-body">
                             <div class="table-container">
                                 <table>
-                                <thead>
-                                    <tr><th>IP Address</th><th>Scan Type</th><th>Severity</th><th>Status</th><th>Action</th></tr>
-                                </thead>
+                                    <thead>
+                                        <tr>
+                                            <th>IP Address</th>
+                                            <th>Scan Type</th>
+                                            <th>Severity</th>
+                                            <th>Threat Score</th>
+                                            <th>Action</th> 
+                                        </tr>
+                                    </thead>
                                 <tbody>
                                     <tr><td colspan="5" class="text-center p-8 text-slate-400">No detections yet.</td></tr>
                                 </tbody>
@@ -203,7 +209,16 @@
             </div>
         </div>
     </div>
-
+    <div class="modal-overlay" id="ip-action-modal">
+    <div class="modal-content">
+        <h3 id="modal-title">Confirm Action</h3>
+        <p id="modal-body">Are you sure you want to proceed?</p>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" id="cancel-action-btn">Cancel</button>
+            <button class="btn btn-danger" id="confirm-action-btn">Confirm</button>
+        </div>
+    </div>
+</div>
     <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
     <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 </body>

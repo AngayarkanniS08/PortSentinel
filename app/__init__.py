@@ -71,7 +71,23 @@ def create_app(sniffer=None, firewall=None, db=None, sys_monitor=None, interface
                 socketio.emit('ip_block_status', {'success': True, 'ip': ip_to_block})
             else:
                 print(f"Failed to block {ip_to_block} via user request.")
-                socketio.emit('ip_block_status', {'success': False, 'ip': ip_to_block})
+                socketio.emit('ip_action_status', {'success': True, 'ip': ip_to_block, 'action': 'block'})
+
+
+    @socketio.on('unblock_ip_request')
+    def handle_unblock_ip(data):
+        ip_to_unblock = data.get('ip')
+        print(f"Received request to unblock IP: {ip_to_unblock}")
+        
+        if firewall and ip_to_unblock:
+            success = firewall.unblock_ip(ip_to_unblock)
+            if success:
+                print(f"Successfully unblocked {ip_to_unblock} via user request.")
+                # UI ku success message anupurom
+                socketio.emit('ip_action_status', {'success': True, 'ip': ip_to_unblock, 'action': 'unblock'})
+            else:
+                print(f"Failed to unblock {ip_to_unblock} via user request.")
+                socketio.emit('ip_action_status', {'success': False, 'ip': ip_to_unblock, 'action': 'unblock'})
 
     @socketio.on('manual_ip_control')
     @login_required

@@ -1,11 +1,10 @@
-# =================================================================
-#            NEW AND UPGRADED engine.py FILE
-# =================================================================
+
 import dpkt
 import datetime
 import socket
 import time
 from collections import defaultdict, deque
+from .threat_intelligence import ThreatIntel 
 
 # Intha class, packets ah oru kuripitta nerathuku save panni vechik yardımcı pannum.
 class SlidingWindow:
@@ -55,6 +54,8 @@ class DetectionEngine:
         self.report_times = {}  # To avoid spamming alerts
         self.alert_count = 0
         self.detected_ips = set()
+        ABUSEIPDB_API_KEY = "c8aba3b6eb35cdbc110bbde4ee84e3dac9cbed1d93c5ce9f4cad596fe618fc975abd88306c988a99" # <-- UNGA API KEY-AH INGA PODUNGA
+        self.threat_intel = ThreatIntel(ABUSEIPDB_API_KEY)
         
         print(f"Detection Engine initialized with advanced thresholds: {self.thresholds}")
 
@@ -162,33 +163,50 @@ class DetectionEngine:
                 self.trigger_alert(src, 'Ping Sweep', 'Medium', list(dsts))
 
 
-    # engine.py-la intha function-ah maathunga
+    # Intha function unga engine.py file-la irukanum
     def trigger_alert(self, src_ip, scan_type, severity, ports):
-        """Helper function to create and send alerts with severity-based blocking logic."""
+        """
+        Helper function to create and send alerts with threat intel.
+        (Alert anupurathuku munnadi, threat intel check panni, severity-ah poruthu block panni,
+        UI-ku ellathayum serthu anupura function ithu).
+        """
+        # Ore scan-ku adikkadi alert anupama irukka, 1 min cool-down vechirom
         key = (src_ip, scan_type)
         if time.time() - self.report_times.get(key, 0) < 60:
             return
+
+        # Threat Intelligence Check
+        # Alert anupurathuku munnadi, antha IP-ah AbuseIPDB-la check panrom
+        intel_data = self.threat_intel.check_ip(src_ip)
+        
+        # Threat score 80%-ku mela irundha, severity-ah "Critical"-nu automatic-ah maathidalam
+        if intel_data and intel_data['score'] > 80:
+            severity = "Critical"
 
         self.report_times[key] = time.time()
         self.alert_count += 1
         self.detected_ips.add(src_ip)
         
-        # --- PUTHU CHANGE INGA ---
+        # Severity-based auto-blocking
         is_blocked_now = False
-        if severity.lower() in ['high', 'critical']: # High-na auto-block
+        if severity.lower() in ['high', 'critical']:
             if self.firewall:
                 self.firewall.block_ip(src_ip)
                 is_blocked_now = True
-        # --- CHANGE MUDINJATHU ---
 
+        # Alert data-va UI-ku anupurathuku prepare panrom
         alert_data = {
             'ip_address': src_ip,
             'scan_type': scan_type,
             'severity': severity,
-            'is_blocked': is_blocked_now # Status ah UI ku anupurom
+            'is_blocked': is_blocked_now,
+            'intel': intel_data  # Puthu intel data-vaiyum serthu anupurom
         }
         
-        print(f"ALERT TRIGGERED: {scan_type} detected from {src_ip}. Severity: {severity}. Blocked: {is_blocked_now}")
+        print(f"ALERT TRIGGERED: {scan_type} from {src_ip}. Severity: {severity}. Blocked: {is_blocked_now}")
         
+        # SocketIO மூலமா UI-ku alert-ah anupurom
         self.socketio.emit('new_alert', alert_data)
+        
+        # Database-la antha detection-ah save panrom
         self.db.add_detection(src_ip, scan_type, severity)
