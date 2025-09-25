@@ -207,11 +207,15 @@
             color: var(--secondary); 
             box-shadow: 0 4px 20px rgba(22, 181, 117, 0.3);
         }
-        .stat-value {
-            font-size: 32px; font-weight: 700; margin: 10px 0;
-            background: linear-gradient(to right, #e2e8f0, #94a3b8);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        }
+.stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    margin: 10px 0;
+    background: linear-gradient(to right, #e2e8f0, #94a3b8);
+    -webkit-background-clip: text; /* Chrome/Safari kaga */
+    background-clip: text;         /* Vera browsers kaga (ithu thaan pudhusa add panrom) */
+    -webkit-text-fill-color: transparent;
+}
         .stat-title { color: #94a3b8; font-size: 14px; font-weight: 500; }
         .card {
             background: rgba(23, 37, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.1);

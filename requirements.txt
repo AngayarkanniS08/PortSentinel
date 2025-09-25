@@ -1,8 +1,15 @@
+#Web Framework
 Flask
 Flask-SocketIO
 python-socketio
+eventlet
+
+#Packet Capture & Analysis (Use pcapy-ng for easier installation)
 pcapy-ng
 dpkt
+
+#Database
 SQLAlchemy
+
+#System Utilities
 psutil
-eventlet

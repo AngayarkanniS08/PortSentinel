@@ -97,5 +97,13 @@ def create_app(sniffer=None, firewall=None, db=None, sys_monitor=None, interface
             socketio.emit('stats_update', current_stats)
 
         print("Stats update thread stopped.")
+            # PUDHUSA ITHA ADD PANNUNGA
+    @app.route('/login')
+    def login():
+        return render_template('login.html')
+
+    @app.route('/register')
+    def register():
+        return render_template('register.html')
         
     return app
