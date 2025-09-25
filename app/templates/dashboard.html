@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Port Sentinel - Professional Network Security Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon"> <i class="fas fa-shield-alt"></i> </div>
+                    <span>Port Sentinel</span>
+                </div>
+            </div>
+            <nav>
+                <a href="#" class="nav-item active"> <i class="fas fa-home"></i> <span>Dashboard</span> </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="profile" id="logout-button">
+                    <div class="profile-avatar"><i class="fas fa-user"></i></div>
+                    <div class="profile-name">Admin User</div>
+                </div>
+            </div>
+        </aside>
+        
+        <main class="main-content">
+            <header class="dashboard-header  glass-card ">
+                <div class="flex items-center gap-4">
+                    <div class="header-icon"> <i class="fas fa-shield-alt text-white text-3xl"></i> </div>
+                    <div class="header-title">
+                        <h1>Port Sentinel</h1>
+                        <p>Advanced Network Security Monitoring</p>
+                    </div>
+                </div>
+                <div id="status-indicator-box" class="status-indicator status-idle">
+                    <div id="status-dot" class="status-dot bg-red-500 blinking"></div>
+                    <div>
+                        <span class="text-xs text-slate-400">System Status</span>
+                        <div id="status-text" class="font-semibold text-idle">Monitor Idle</div>
+                    </div>
+                </div>
+            </header>
+            
+            <div class="content-wrapper">
+                <div class="stats-grid">
+                    <div class="stat-card glass-card">
+                        <div class="stat-header">
+                            <h3 class="stat-title">Packets Processed</h3>
+                            <div class="stat-icon icon-blue"><i class="fas fa-network-wired"></i></div>
+                        </div>
+                        <div class="stat-value" id="packets-processed">0</div>
+                        <div class="progress-bar">
+                            <div class="progress-value" id="packets-progress-bar" style="width: 0%"></div>
+                        </div>
+                        <p class="stat-title">Current traffic load</p>
+                    </div>
+                    
+                    <div class="stat-card glass-card">
+                        <div class="stat-header">
+                            <h3 class="stat-title">Alerts Triggered</h3>
+                            <div class="stat-icon icon-red"><i class="fas fa-exclamation-triangle"></i></div>
+                        </div>
+                        <div class="stat-value text-red-400" id="alerts-triggered">0</div>
+                        <div class="progress-bar">
+                            <div class="progress-value" id="alerts-progress-bar" style="width: 0%; background: var(--danger);"></div>
+                        </div>
+                        <p class="stat-title">Alerts vs Goal (50)</p>
+                    </div>
+                    
+                    <div class="stat-card glass-card">
+                        <div class="stat-header">
+                            <h3 class="stat-title">Detected IPs</h3>
+                            <div class="stat-icon icon-amber"><i class="fas fa-desktop"></i></div>
+                        </div>
+                        <div class="stat-value text-amber-400" id="detected-ips">0</div>
+                        <div class="progress-bar">
+                            <div class="progress-value" id="ips-progress-bar" style="width: 0%; background: var(--warning);"></div>
+                        </div>
+                        <p class="stat-title">IPs vs Goal (10)</p>
+                    </div>
+                    
+                    <div class="stat-card glass-card">
+                        <div class="stat-header">
+                            <h3 class="stat-title">Current Traffic</h3>
+                            <div class="stat-icon icon-green"><i class="fas fa-chart-line"></i></div>
+                        </div>
+                        <div class="stat-value text-green-400" id="current-traffic">0/s</div>
+                        <div class="progress-bar">
+                            <div class="progress-value" id="traffic-progress-bar" style="width: 0%; background: var(--secondary);"></div>
+                        </div>
+                        <p class="stat-title">Packets per second</p>
+                    </div>
+                </div>
+                
+                <div class="two-column-layout">
+                    <div class="card glass-card">
+                        <div class="card-header"><i class="fas fa-chart-bar"></i>Detection Stats</div>
+                        <div class="card-body" style="padding: 30px;">
+                            <div class="detection-stats-item">
+                                <span class="detection-stats-label">Interface</span>
+                                <span id="stats-interface" class="detection-stats-value">N/A</span>
+                            </div>
+                            <div class="detection-stats-item">
+                                <span class="detection-stats-label">Uptime</span>
+                                <span id="stats-uptime" class="detection-stats-value">0m 0s</span>
+                            </div>
+                            <div class="detection-stats-item">
+                                <span class="detection-stats-label">Detection Accuracy</span>
+                                <span id="stats-accuracy" class="detection-stats-value high">0%</span>
+                            </div>
+                            <div class="detection-stats-item">
+                                 <div class="w-full">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="detection-stats-label">Traffic Load</span>
+                                        <span id="stats-traffic-load-value" class="detection-stats-value">0%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div id="stats-traffic-load-bar" class="progress-value" style="width: 0%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card glass-card recent-detections-card">
+                        <div class="card-header"><i class="fas fa-list-alt"></i>Recent Detections</div>
+                        <div class="card-body">
+                            <div class="table-container">
+                                <table>
+                                    <thead>
+                                        <tr><th>IP Address</th><th>Scan Type</th><th>Severity</th><th>Status</th></tr>
+                                    </thead>
+                                    <tbody id="detections-table-body">
+                                        <tr><td colspan="4" class="text-center p-8 text-slate-400">No detections yet.</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card glass-card">
+                     <div class="card-header flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-radar"></i> Network Traffic Monitor
+                            <div class="scan-animation scan-red ml-2"></div>
+                        </div>
+                        <button id="start-stop-btn" class="btn btn-success">
+                            <i class="fas fa-play"></i><span>Start Monitor</span>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                    <div class="filter-panel">
+                        <div class="flex gap-4">
+                            <select id="protocol-filter" class="filter-select">
+                                <option value="">All Protocols</option>
+                                <option value="TCP">TCP</option>
+                                <option value="UDP">UDP</option>
+                                <option value="ICMP">ICMP</option>
+                            </select>
+                            <select id="status-filter" class="filter-select">
+                                <option value="">All Statuses</option>
+                                <option value="Allowed">Allowed</option>
+                                <option value="Scan">Scan</option>
+                                <option value="Blocked">Blocked</option>
+                            </select>
+                        </div>
+                        <input type="text" id="ip-filter" class="filter-input" placeholder="Filter by IP Address...">
+                    </div>
+
+                        <div class="table-container traffic-table-container" style="max-height: 850px;">
+                            <table>
+                                <thead>
+                                    <tr><th>SNO</th><th>TIME</th><th>PROTO</th><th>SOURCE</th><th>DESTINATION</th><th>STATUS</th></tr>
+                                </thead>
+                                <tbody id="packets-table-body">
+                                    <tr><td colspan="6" class="text-center p-8 text-slate-400">Click 'Start Monitor' to see live traffic.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="logout-modal">
+        <div class="modal-content">
+            <h3>Confirm Logout</h3>
+            <p>Are you sure you want to logout?</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="cancel-logout-btn">Cancel</button>
+                <button class="btn btn-danger" id="confirm-logout-btn">Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>

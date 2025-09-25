@@ -1,0 +1,8 @@
+Flask
+Flask-SocketIO
+python-socketio
+pcapy-ng
+dpkt
+SQLAlchemy
+psutil
+eventlet
