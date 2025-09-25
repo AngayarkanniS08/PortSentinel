@@ -63,6 +63,40 @@
             socket.on('new_alert', (alert) => { if(isMonitoring) { addDetectionToTable(alert); } });
             socket.on('stats_update', (stats) => { if(isMonitoring) { updateStats(stats); } });
 
+            detectionsTableBody.addEventListener('click', function(event) {
+                // Click pannathu "block-btn" class irukura button-ah nu check panrom
+                const blockButton = event.target.closest('.block-btn');
+                if (blockButton) {
+                    const ipToBlock = blockButton.dataset.ip;
+                    console.log(`Requesting to block IP: ${ipToBlock}`);
+                    
+                    // Backend-ku 'block_ip' signal anupurom
+                    socket.emit('block_ip_request', { 'ip': ipToBlock });
+                    
+                    // Button ah "Blocking..." nu maathrom
+                    blockButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Blocking';
+                    blockButton.disabled = true;
+                }
+            });
+
+            // Backend-la irundhu block successful-nu message vandha, UI update pannanum
+            socket.on('ip_block_status', (data) => {
+                if (data.success) {
+                    // Table-la irukura ella rows-layum check panni, antha IP ku "Blocked"-nu maathrom
+                    document.querySelectorAll(`.block-btn[data-ip="${data.ip}"]`).forEach(btn => {
+                        const cell = btn.parentElement;
+                        cell.innerHTML = '<span class="text-red-400">Blocked</span>';
+                    });
+                } else {
+                    // Block panna mudiyalana, button ah palayaപടി maathidalam
+                    document.querySelectorAll(`.block-btn[data-ip="${data.ip}"]`).forEach(btn => {
+                        btn.innerHTML = '<i class="fas fa-ban"></i> Block';
+                        btn.disabled = false;
+                        alert(`Failed to block IP: ${data.ip}. Check server logs.`);
+                    });
+                }
+            });
+
         function updateMonitorStatusUI(isRunning) {
             const statusIndicatorBox = document.getElementById('status-indicator-box');
 
@@ -154,38 +188,37 @@
                 }
             }
             
-            // Intha function-ah PUDHUSA REPLACE PANNUNGA
+            // index.html-la intha function-ah maathunga
             function addDetectionToTable(alert) {
-                const placeholder = detectionsTableBody.querySelector('td[colspan="5"]');
+                const placeholder = detectionsTableBody.querySelector('td[colspan="4"]');
                 if(placeholder) placeholder.parentElement.remove();
-
-                const newRow = detectionsTableBody.insertRow(0);
-                newRow.id = `detection-${alert.alert_id}`; // Row-ku oru unique ID kudukrom
-
-                const severityClass = alert.severity === 'High' ? 'text-red-400' : 'text-amber-400';
-                const isBlocked = alert.is_blocked;
-                const statusText = isBlocked ? 'Blocked' : 'Detected';
-                const statusClass = isBlocked ? 'alert-critical' : 'alert-warning';
                 
-                // PUDHU HTML: Toggle switch-oda serthu create panrom
-                newRow.innerHTML = `
-                    <td class="font-mono">${alert.ip_address}</td>
-                    <td>${alert.scan_type}</td>
-                    <td><span class="${severityClass}">${alert.severity}</span></td>
-                    <td><span class="alert-badge ${statusClass}">${statusText}</span></td>
-                    <td>
-                        <label class="toggle-switch">
-                            <input type="checkbox" class="ip-toggle" data-ip="${alert.ip_address}" ${isBlocked ? 'checked' : ''}>
-                            <span class="slider"></span>
-                        </label>
-                    </td>`;
+                const newRow = detectionsTableBody.insertRow(0);
+                const severityClass = alert.severity.toLowerCase() === 'high' ? 'text-red-400' : 
+                                    alert.severity.toLowerCase() === 'medium' ? 'text-amber-400' : 'text-blue-400';
 
-                if (detectionsTableBody.rows.length > 10) { 
+                // --- PUTHU CHANGE INGA ---
+                let statusCellHtml;
+                if (alert.is_blocked) {
+                    statusCellHtml = '<td><span class="text-red-400">Blocked</span></td>';
+                } else {
+                    // Block aagalana, "Block" button kaaturom
+                    statusCellHtml = `<td>
+                                        <button class="btn btn-danger btn-sm block-btn" data-ip="${alert.ip_address}">
+                                            <i class="fas fa-ban"></i> Block
+                                        </button>
+                                    </td>`;
+                }
+                // --- CHANGE MUDINJATHU ---
+
+                newRow.innerHTML = `<td class="font-mono">${alert.ip_address}</td> 
+                                    <td>${alert.scan_type}</td> 
+                                    <td><span class="${severityClass}">${alert.severity}</span></td>
+                                    ${statusCellHtml}`; // Puthu status cell ah use panrom
+
+                if (detectionsTableBody.rows.length > 5) { 
                     detectionsTableBody.deleteRow(-1); 
                 }
-                
-                // Pudhusa create panna switch-ku event listener add panrom
-                addToggleListener(newRow.querySelector('.ip-toggle'));
             }
 
             // ITHA PUDHUSA ADD PANNUNGA

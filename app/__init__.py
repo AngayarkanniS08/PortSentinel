@@ -56,6 +56,22 @@ def create_app(sniffer=None, firewall=None, db=None, sys_monitor=None, interface
             
         elif action == 'stop' and sniffer.is_running():
             sniffer.stop()
+    # app.py-la create_app() function-kulla add pannunga
+
+    @socketio.on('block_ip_request')
+    def handle_block_ip(data):
+        ip_to_block = data.get('ip')
+        print(f"Received request to block IP: {ip_to_block}")
+        
+        if firewall and ip_to_block:
+            success = firewall.block_ip(ip_to_block)
+            if success:
+                print(f"Successfully blocked {ip_to_block} via user request.")
+                # UI ku success message anupurom
+                socketio.emit('ip_block_status', {'success': True, 'ip': ip_to_block})
+            else:
+                print(f"Failed to block {ip_to_block} via user request.")
+                socketio.emit('ip_block_status', {'success': False, 'ip': ip_to_block})
 
     @socketio.on('manual_ip_control')
     @login_required
