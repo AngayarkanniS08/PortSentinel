@@ -490,3 +490,49 @@
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
         }
+
+        /* --- PUTHU UPGRADE: DEPLOY SENTINEL BUTTON-KU CYBER GLOW STYLE --- */
+.btn-deploy {
+    background: linear-gradient(45deg, #10ac84, #01a3a4); /* Puthu Green Gradient */
+    color: white;
+    border: 1px solid rgba(22, 181, 117, 0.5);
+    box-shadow: 0 0 10px rgba(22, 181, 117, 0.3), 
+                inset 0 0 5px rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden; /* Shine effect-ku ithu mukkiyam */
+}
+
+.btn-deploy:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 20px rgba(22, 181, 117, 0.6);
+}
+
+/* Mouse vecha oru "shine" effect varum */
+.btn-deploy::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -75%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.25) 50%, rgba(255, 255, 255, 0) 100%);
+    transform: skewX(-25deg);
+    transition: left 0.7s ease;
+}
+
+.btn-deploy:hover::before {
+    left: 125%;
+}
+
+/* Stop button-oda danger state-ku style */
+.btn-deploy.btn-danger {
+    background: linear-gradient(45deg, #ff4757, #d63031);
+    border-color: rgba(255, 71, 87, 0.5);
+    box-shadow: 0 0 10px rgba(255, 71, 87, 0.3), 
+                inset 0 0 5px rgba(255, 255, 255, 0.2);
+}
+
+.btn-deploy.btn-danger:hover {
+    box-shadow: 0 0 20px rgba(255, 71, 87, 0.6);
+}

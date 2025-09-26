@@ -43,7 +43,7 @@ class PacketSniffer:
 
                 # Batch updates help reduce frontend lag
                 current_time = time.time()
-                if current_time - last_emit_time > 0.5 and packet_batch:
+                if current_time - last_emit_time > 0.2 and packet_batch:
                     self.socketio.emit('packet_update_batch', packet_batch)
                     packet_batch = []
                     last_emit_time = current_time
