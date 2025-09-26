@@ -265,7 +265,7 @@
         .detection-stats-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0; }
         .detection-stats-label { color: #cbd5e1; font-size: 16px; }
         .detection-stats-value { font-weight: 600; color: #e2e8f0; font-size: 16px; }
-        .recent-detections-card .table-container { max-height: 230px; overflow-y: auto; }
+        .recent-detections-card .table-container { max-height: 230px; overflow-y: auto; scrollbar-width: none; }
         .recent-detections-card table thead th { position: sticky; top: 0; z-index: 1; }
         .traffic-table-container { -ms-overflow-style: none; scrollbar-width: none; }
         .traffic-table-container::-webkit-scrollbar { display: none; }
@@ -463,4 +463,30 @@
         /* Sila neram table update aagum bothu, UI "jump" aaguratha thadukka */
         #packets-table-body, #detections-table-body {
             transition: opacity 0.3s ease-in-out;
+        }
+        /* --- PUDHU UPGRADE: DROPDOWN OPTIONS MENU DESIGN (WITH BLUR & HOVER) --- */
+
+        /* Ithu antha dropdown options-oda font & background color-ah maathum */
+        .filter-select option {
+            /* PUTHU CHANGE: Blur effect theriyurathukku background konjam transparent aakrom */
+            background: rgba(30, 41, 59, 0.8); /* From #1e293b to rgba */
+            color: #e2e8f0;
+            padding: 12px 16px; /* Konjam extra space */
+
+            /* PUTHU CHANGE: Lift effect smooth-ah varathukku */
+            transition: transform 0.2s ease-out, background-color 0.2s ease-out;
+        }
+
+        /* PUTHU CHANGE: Mouse vechathum option-ah lift panni kaatum */
+        .filter-select option:hover {
+            background: rgba(90, 118, 233, 0.2); /* Hover color-ah maathrom */
+            transform: scale(1.03); /* Konjam perusa aagum */
+            cursor: pointer;
+        }
+
+        .filter-select {
+            color-scheme: dark;
+            /* PUTHU CHANGE: Dropdown box-ku blur effect add panrom */
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
         }

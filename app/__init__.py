@@ -89,7 +89,11 @@ def create_app(sniffer=None, firewall=None, db=None, sys_monitor=None, interface
     def handle_connect():
         print('Client connected')
         if sniffer:
+            # Monitor status anupurom
             socketio.emit('monitor_status_update', {'is_running': sniffer.is_running()})
+            # PUDHU CHANGE: Threat Intel status-ayum anupurom
+            if hasattr(sniffer.engine, 'threat_intel_enabled'):
+                socketio.emit('threat_intel_status_update', {'is_enabled': sniffer.engine.threat_intel_enabled})
 
     @socketio.on('disconnect')
     def handle_disconnect():
@@ -99,7 +103,7 @@ def create_app(sniffer=None, firewall=None, db=None, sys_monitor=None, interface
     def handle_control_monitoring(data):
         action = data.get('action')
         print(f"Received '{action}' monitoring command from client.")
-        
+
         if not sniffer: return
 
         if action == 'start' and not sniffer.is_running():
@@ -108,9 +112,12 @@ def create_app(sniffer=None, firewall=None, db=None, sys_monitor=None, interface
             socketio.start_background_task(target=sniffer._sniff_loop)
             socketio.start_background_task(target=send_stats_updates, sniffer=sniffer, sys_monitor=sys_monitor, interface_name=interface_name)
             socketio.start_background_task(target=analysis_loop, engine=sniffer.engine, sniffer_instance=sniffer)
-            
+            # PUDHU CHANGE: Status-ah udane anupurom
+            socketio.emit('monitor_status_update', {'is_running': True})
+
         elif action == 'stop' and sniffer.is_running():
             sniffer.stop()
+            socketio.emit('monitor_status_update', {'is_running': False})
 
     @socketio.on('toggle_threat_intel')
     def handle_toggle_threat_intel(data):

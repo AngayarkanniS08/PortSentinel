@@ -131,6 +131,13 @@ document.addEventListener('DOMContentLoaded', function () {
         updateMonitorStatusUI(isMonitoring);
     });
 
+    // PUDHU CHANGE: Threat Intel status-ah backend-la irundhu vaangi UI-ah update panrom
+    socket.on('threat_intel_status_update', (data) => {
+        if (threatIntelToggle) {
+            threatIntelToggle.checked = data.is_enabled;
+        }
+    });
+
     // Block/Unblock action-oda result
     socket.on('ip_action_status', (data) => {
         const button = detectionsTableBody.querySelector(`button[data-ip="${data.ip}"]`);
