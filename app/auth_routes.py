@@ -14,7 +14,7 @@ def init_auth_routes(app, db):
             password = request.form.get('password')
             
             if not email or not password:
-                flash('Email and password renduமே aavasiyam.')
+                flash('Email and password')
                 return redirect(url_for('login'))
 
             user = db.find_user_by_email(email)
