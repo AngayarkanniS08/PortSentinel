@@ -31,7 +31,60 @@ def create_app(sniffer=None, firewall=None, db=None, sys_monitor=None, interface
     def index():
         return render_template('dashboard.html', username=current_user.username)
 
-    # --- SocketIO Events (Ithula entha maathamum illa, apdiye irukkattum) ---
+    # --- Background Task Functions ---
+
+    def analysis_loop(engine, sniffer_instance):
+        """Periodically tells the DetectionEngine to analyze packets."""
+        print("✅ Analysis loop thread started (managed by SocketIO).")
+        while sniffer_instance and sniffer_instance.is_running():
+            socketio.sleep(5)
+            # Loop-kulla check panrathu innum better
+            if sniffer_instance.is_running():
+                print("▶️ Running periodic analysis of collected packets...")
+                engine.analyze_and_alert()
+        print("⏹️ Analysis loop thread stopped.")
+
+
+    def send_stats_updates(sniffer, sys_monitor, interface_name):
+        print("✅ Stats update thread started.")
+        last_packet_count = 0
+        
+        while sniffer and sniffer.is_running():
+            socketio.sleep(1)
+            # Loop-kulla check panrathu innum better
+            if not sniffer.is_running():
+                break
+
+            current_packets = sniffer.get_packet_count()
+            packets_per_second = current_packets - last_packet_count
+            last_packet_count = current_packets
+            max_pps_for_load = 1000.0 
+            traffic_load = min(100, int((packets_per_second / max_pps_for_load) * 100))
+            alerts = sniffer.engine.alert_count if sniffer.engine else 0
+            ips = len(sniffer.engine.detected_ips) if sniffer.engine else 0
+            alerts_bar_percent = min(100, int((alerts / 50.0) * 100))
+            ips_bar_percent = min(100, int((ips / 10.0) * 100))
+            
+            current_stats = {
+                'packets_processed': current_packets,
+                'alerts_triggered': alerts,
+                'detected_ips_count': ips,
+                'current_traffic_pps': packets_per_second,
+                'uptime': sys_monitor.get_uptime() if sys_monitor else '0m 0s',
+                'traffic_load_percent': traffic_load,
+                'interface': interface_name if interface_name else 'N/A',
+                'detection_accuracy': 98.7, # Placeholder value
+                'packets_bar_percent': traffic_load,
+                'alerts_bar_percent': alerts_bar_percent,
+                'ips_bar_percent': ips_bar_percent,
+                'traffic_bar_percent': traffic_load,
+            }
+            socketio.emit('stats_update', current_stats)
+
+        print("⏹️ Stats update thread stopped.")
+
+    # --- SocketIO Events ---
+
     @socketio.on('connect')
     def handle_connect():
         print('Client connected')
@@ -51,12 +104,21 @@ def create_app(sniffer=None, firewall=None, db=None, sys_monitor=None, interface
 
         if action == 'start' and not sniffer.is_running():
             if sys_monitor: sys_monitor.start_timer()
+            # Ella background tasks-ayum inga start panrom
             socketio.start_background_task(target=sniffer._sniff_loop)
-            socketio.start_background_task(target=lambda: send_stats_updates(sniffer, sys_monitor, interface_name))
+            socketio.start_background_task(target=send_stats_updates, sniffer=sniffer, sys_monitor=sys_monitor, interface_name=interface_name)
+            socketio.start_background_task(target=analysis_loop, engine=sniffer.engine, sniffer_instance=sniffer)
             
         elif action == 'stop' and sniffer.is_running():
             sniffer.stop()
-    # app.py-la create_app() function-kulla add pannunga
+
+    @socketio.on('toggle_threat_intel')
+    def handle_toggle_threat_intel(data):
+        is_enabled = data.get('enabled', False)
+        if sniffer and hasattr(sniffer.engine, 'threat_intel_enabled'):
+            sniffer.engine.threat_intel_enabled = is_enabled
+            status = "enabled" if is_enabled else "disabled"
+            print(f"Threat Intelligence has been {status} by user.")
 
     @socketio.on('block_ip_request')
     def handle_block_ip(data):
@@ -65,14 +127,12 @@ def create_app(sniffer=None, firewall=None, db=None, sys_monitor=None, interface
         
         if firewall and ip_to_block:
             success = firewall.block_ip(ip_to_block)
+            # UI ku response anupurom
+            socketio.emit('ip_action_status', {'success': success, 'ip': ip_to_block, 'action': 'block'})
             if success:
                 print(f"Successfully blocked {ip_to_block} via user request.")
-                # UI ku success message anupurom
-                socketio.emit('ip_block_status', {'success': True, 'ip': ip_to_block})
             else:
                 print(f"Failed to block {ip_to_block} via user request.")
-                socketio.emit('ip_action_status', {'success': True, 'ip': ip_to_block, 'action': 'block'})
-
 
     @socketio.on('unblock_ip_request')
     def handle_unblock_ip(data):
@@ -81,58 +141,11 @@ def create_app(sniffer=None, firewall=None, db=None, sys_monitor=None, interface
         
         if firewall and ip_to_unblock:
             success = firewall.unblock_ip(ip_to_unblock)
+            # UI ku response anupurom
+            socketio.emit('ip_action_status', {'success': success, 'ip': ip_to_unblock, 'action': 'unblock'})
             if success:
                 print(f"Successfully unblocked {ip_to_unblock} via user request.")
-                # UI ku success message anupurom
-                socketio.emit('ip_action_status', {'success': True, 'ip': ip_to_unblock, 'action': 'unblock'})
             else:
                 print(f"Failed to unblock {ip_to_unblock} via user request.")
-                socketio.emit('ip_action_status', {'success': False, 'ip': ip_to_unblock, 'action': 'unblock'})
-
-    @socketio.on('manual_ip_control')
-    @login_required
-    def handle_manual_ip_control(data):
-        ip = data.get('ip_address')
-        action = data.get('action')
-        if not ip or not action or not firewall: return
-        print(f"Firewall: Received manual command to '{action}' IP: {ip}")
-        if action == 'block':
-            firewall.block_ip(ip)
-        elif action == 'unblock':
-            firewall.unblock_ip(ip)
-
-    def send_stats_updates(sniffer, sys_monitor, interface_name):
-        print("Stats update thread started.")
-        last_packet_count = 0
-        
-        while sniffer and sniffer.is_running():
-            socketio.sleep(1)
-            current_packets = sniffer.get_packet_count()
-            packets_per_second = current_packets - last_packet_count
-            last_packet_count = current_packets
-            max_pps_for_load = 1000.0 
-            traffic_load = min(100, int((packets_per_second / max_pps_for_load) * 100))
-            alerts = sniffer.engine.alert_count
-            ips = len(sniffer.engine.detected_ips)
-            alerts_bar_percent = min(100, int((alerts / 50.0) * 100))
-            ips_bar_percent = min(100, int((ips / 10.0) * 100))
-            
-            current_stats = {
-                'packets_processed': current_packets,
-                'alerts_triggered': alerts,
-                'detected_ips_count': ips,
-                'current_traffic_pps': packets_per_second,
-                'uptime': sys_monitor.get_uptime() if sys_monitor else '0m 0s',
-                'traffic_load_percent': traffic_load,
-                'interface': interface_name if interface_name else 'N/A',
-                'detection_accuracy': 98.7,
-                'packets_bar_percent': traffic_load,
-                'alerts_bar_percent': alerts_bar_percent,
-                'ips_bar_percent': ips_bar_percent,
-                'traffic_bar_percent': traffic_load,
-            }
-            socketio.emit('stats_update', current_stats)
-
-        print("Stats update thread stopped.")
         
     return app

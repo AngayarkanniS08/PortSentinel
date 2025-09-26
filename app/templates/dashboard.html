@@ -155,15 +155,25 @@
                 </div>
                 
                 <div class="card glass-card">
-                     <div class="card-header flex justify-between items-center">
-                        <div class="flex items-center gap-3">
-                            <i class="fas fa-radar"></i> Network Traffic Monitor
-                            <div class="scan-animation scan-red ml-2"></div>
-                        </div>
-                        <button id="start-stop-btn" class="btn btn-success">
-                            <i class="fas fa-play"></i><span>Start Monitor</span>
-                        </button>
-                    </div>
+<div class="card-header flex justify-between items-center">
+    <div class="flex items-center gap-3">
+        <i class="fas fa-radar"></i> Network Traffic Monitor
+        <div class="scan-animation scan-red ml-2"></div>
+    </div>
+
+    <div class="flex items-center gap-4">
+        <div id="threat-intel-control" class="threat-intel-toggle-container">
+            <span class="toggle-label">Threat Intel</span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="threat-intel-toggle" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
+        <button id="start-stop-btn" class="btn btn-success">
+            <i class="fas fa-play"></i><span>Start Monitor</span>
+        </button>
+    </div>
+    </div>
                     <div class="card-body">
                     <div class="filter-panel">
                         <div class="flex gap-4">

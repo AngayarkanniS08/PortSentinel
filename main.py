@@ -7,22 +7,7 @@ from app.database import DatabaseHandler
 from core.firewall import FirewallManager
 from core.utils import SystemMonitor, find_active_interface
 
-def analysis_loop(engine, sniffer):
-    """
-    Background thread that periodically tells the DetectionEngine to analyze
-    the packets it has collected so far.
-    (Ithu oru background thread. 5 second-ku oru thadava, collect aana packets-ah
-    analyze pannu-nu engine-ku sollum).
-    """
-    print("✅ Analysis loop thread started.")
-    while True:
-        # We check every 5 seconds. You can change this value.
-        time.sleep(5) 
-        
-        # Monitor ஓடினால் மட்டுமே analysis நடக்கும்.
-        if sniffer and sniffer.is_running():
-            print("▶️ Running periodic analysis of collected packets...")
-            engine.analyze_and_alert()
+
 
 def main():
     """
@@ -64,15 +49,6 @@ def main():
 
     packet_sniffer = PacketSniffer(interface, detection_engine, socketio)
 
-    # --- NEW: Starting the Analysis Thread ---
-    # Intha thread thaan namma puthu `analyze_and_alert` function-ah run pannum
-    analysis_thread = threading.Thread(
-        target=analysis_loop, 
-        args=(detection_engine, packet_sniffer),
-        daemon=True  # Main program close aana, intha thread-um close aagidum
-    )
-    analysis_thread.start()
-    # --- CHANGE ENDS ---
 
     app = create_app(
         sniffer=packet_sniffer,

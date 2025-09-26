@@ -54,59 +54,85 @@ class DetectionEngine:
         self.report_times = {}  # To avoid spamming alerts
         self.alert_count = 0
         self.detected_ips = set()
+        self.threat_intel_enabled = True 
         ABUSEIPDB_API_KEY = "c8aba3b6eb35cdbc110bbde4ee84e3dac9cbed1d93c5ce9f4cad596fe618fc975abd88306c988a99" # <-- UNGA API KEY-AH INGA PODUNGA
         self.threat_intel = ThreatIntel(ABUSEIPDB_API_KEY)
         
         print(f"Detection Engine initialized with advanced thresholds: {self.thresholds}")
 
     def process_packet(self, raw_packet, sno):
-        """
-        Processes a single raw packet and stores it for future analysis.
-        (Inga analysis nadakathu, verum data mattum store pannum)
-        """
-        try:
-            eth = dpkt.ethernet.Ethernet(raw_packet)
-            if not isinstance(eth.data, dpkt.ip.IP): return None
+            """
+            Processes a single raw packet. It now handles both IP and non-IP packets
+            to ensure the UI always shows all traffic.
+            """
+            try:
+                eth = dpkt.ethernet.Ethernet(raw_packet)
 
-            ip = eth.data
-            src_ip = socket.inet_ntoa(ip.src)  # type: ignore
-            dst_ip = socket.inet_to_a(ip.dst)  # type: ignore
+                # --- PUTHU FIX INGA START AAGUTHU ---
+                # MAC Address-ah readable format-ku maathura oru chinna function
+                def mac_to_str(address):
+                    return ':'.join(f'{b:02x}' for b in address)
 
-            # Whitelist la irundha ignore pannidalam
-            if src_ip in self.thresholds.get("whitelist", set()): return None
-            
-            # --- Packet information ah collect panrom ---
-            self.win.add(src_ip, {'proto': ip.p})  # type: ignore
-            
-            # TCP Packet
-            if isinstance(ip.data, dpkt.tcp.TCP):
-                tcp = ip.data
-                flags = {
-                    'SYN': bool(tcp.flags & dpkt.tcp.TH_SYN), 'ACK': bool(tcp.flags & dpkt.tcp.TH_ACK),  # type: ignore
-                    'RST': bool(tcp.flags & dpkt.tcp.TH_RST), 'FIN': bool(tcp.flags & dpkt.tcp.TH_FIN),  # type: ignore
-                    'PSH': bool(tcp.flags & dpkt.tcp.TH_PUSH), 'URG': bool(tcp.flags & dpkt.tcp.TH_URG),  # type: ignore
+                # Packet IP-a illaya-nu check panrom
+                if not isinstance(eth.data, dpkt.ip.IP):
+                    # IP illana, athu enna type-nu kaatti, MAC address-ah vechi oru entry create panrom
+                    return {
+                        'sno': sno,
+                        'time': datetime.datetime.now().strftime('%H:%M:%S'),
+                        'proto': eth.data.__class__.__name__,  # Example: 'ARP'
+                        'source_ip': mac_to_str(eth.src),  # type: ignore
+                        'dest_ip': mac_to_str(eth.dst),  # type: ignore
+                        'status': 'Ignored'  # Engine itha scan-ku eduthukkaathu
+                    }
+                # --- PUTHU FIX MUDINJATHU ---
+
+                # Pazhaya IP packet logic inga irunthu continue aagum
+                ip = eth.data
+                src_ip = socket.inet_ntoa(ip.src) # type: ignore
+                dst_ip = socket.inet_ntoa(ip.dst) # type: ignore
+
+                if src_ip in self.thresholds.get("whitelist", set()):
+                    return None
+                
+                self.win.add(src_ip, {'proto': ip.p}) # type: ignore
+                
+                if isinstance(ip.data, dpkt.tcp.TCP):
+                    tcp = ip.data
+                    flags = {
+                        'SYN': bool(tcp.flags & dpkt.tcp.TH_SYN), 'ACK': bool(tcp.flags & dpkt.tcp.TH_ACK), # type: ignore
+                        'RST': bool(tcp.flags & dpkt.tcp.TH_RST), 'FIN': bool(tcp.flags & dpkt.tcp.TH_FIN), # type: ignore
+                        'PSH': bool(tcp.flags & dpkt.tcp.TH_PUSH), 'URG': bool(tcp.flags & dpkt.tcp.TH_URG), # type: ignore
+                    }
+                    self.tcp[src_ip][dst_ip].append({'ts': time.time(), 'dport': tcp.dport, 'flags': flags}) # type: ignore
+                
+                elif isinstance(ip.data, dpkt.udp.UDP):
+                    udp = ip.data
+                    self.udp[src_ip][dst_ip].append({'ts': time.time(), 'dport': udp.dport}) # type: ignore
+                
+                elif isinstance(ip.data, dpkt.icmp.ICMP):
+                    icmp = ip.data 
+                    self.icmp[src_ip].append({'ts': time.time(), 'dst': dst_ip, 'type': icmp.type, 'code': icmp.code}) # type: ignore
+                
+                packet_info = {
+                    'sno': sno,
+                    'time': datetime.datetime.now().strftime('%H:%M:%S'),
+                    'proto': ip.data.__class__.__name__,
+                    'source_ip': src_ip,
+                    'dest_ip': dst_ip,
+                    'status': 'Allowed'
                 }
-                self.tcp[src_ip][dst_ip].append({'ts': time.time(), 'dport': tcp.dport, 'flags': flags})  # type: ignore
-            
-            # UDP Packet
-            elif isinstance(ip.data, dpkt.udp.UDP):
-                udp = ip.data
-                self.udp[src_ip][dst_ip].append({'ts': time.time(), 'dport': udp.dport})  # type: ignore
-            
-            # ICMP Packet
-            elif isinstance(ip.data, dpkt.icmp.ICMP):
-                icmp = ip.data 
-                self.icmp[src_ip].append({'ts': time.time(), 'dst': dst_ip, 'type': icmp.type, 'code': icmp.code})  # type: ignore
-            
-            # UI ku anupurathuku, basic info create panrom
-            packet_info = {
-                'sno': sno, 'time': datetime.datetime.now().strftime('%H:%M:%S'),
-                'proto': ip.data.__class__.__name__, 'source_ip': src_ip, 'dest_ip': dst_ip, 'status': 'Allowed'
-            }
-            return packet_info
+                return packet_info
 
-        except Exception:
-            return None
+            except Exception:
+                # Ethavathu error aanaalum, UI-la kaatradhukku oru entry create panrom
+                return {
+                    'sno': sno,
+                    'time': datetime.datetime.now().strftime('%H:%M:%S'),
+                    'proto': 'Unknown',
+                    'source_ip': 'N/A',
+                    'dest_ip': 'N/A',
+                    'status': 'Parse Error'
+                }
 
     def analyze_and_alert(self):
         """
@@ -174,10 +200,15 @@ class DetectionEngine:
         key = (src_ip, scan_type)
         if time.time() - self.report_times.get(key, 0) < 60:
             return
+        
+        intel_data = None # Initial-ah 'None' nu set pannikalam
+        if self.threat_intel_enabled:
+            print(f"Threat Intel is ON. Checking IP: {src_ip}")
+            intel_data = self.threat_intel.check_ip(src_ip)
+        else:
+            print(f"Threat Intel is OFF. Skipping IP check for: {src_ip}")
 
-        # Threat Intelligence Check
-        # Alert anupurathuku munnadi, antha IP-ah AbuseIPDB-la check panrom
-        intel_data = self.threat_intel.check_ip(src_ip)
+
         
         # Threat score 80%-ku mela irundha, severity-ah "Critical"-nu automatic-ah maathidalam
         if intel_data and intel_data['score'] > 80:
