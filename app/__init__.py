@@ -31,6 +31,11 @@ def create_app(sniffer=None, firewall=None, db=None, sys_monitor=None, interface
     def index():
         return render_template('dashboard.html', username=current_user.username)
 
+    @app.route('/traffic')
+    @login_required
+    def traffic_monitor():
+        return render_template('traffic_monitor.html', username=current_user.username) 
+
     # --- Background Task Functions ---
 
     def analysis_loop(engine, sniffer_instance):

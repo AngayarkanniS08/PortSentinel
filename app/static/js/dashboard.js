@@ -1,39 +1,26 @@
 document.addEventListener('DOMContentLoaded', function () {
     // ==========================================================
-    // 1. ELEMENT SELECTIONS (ELLA ELEMENTS-UM INGA IRUKKU)
+    // 1. ELEMENT SELECTIONS
     // ==========================================================
     const startStopBtn = document.getElementById('start-stop-btn');
-    const startStopBtnIcon = startStopBtn.querySelector('i');
-    const startStopBtnText = startStopBtn.querySelector('span');
-    const statusDot = document.getElementById('status-dot');
-    const statusText = document.getElementById('status-text');
     const packetsTableBody = document.getElementById('packets-table-body');
-    const detectionsTableBody = document.querySelector('.recent-detections-card tbody'); // Corrected selector
-    const packetsProcessedEl = document.getElementById('packets-processed');
-    const alertsTriggeredEl = document.getElementById('alerts-triggered');
-    const detectedIpsEl = document.getElementById('detected-ips');
-    const currentTrafficEl = document.getElementById('current-traffic');
-    const statsInterfaceEl = document.getElementById('stats-interface');
-    const statsUptimeEl = document.getElementById('stats-uptime');
-    const statsAccuracyEl = document.getElementById('stats-accuracy');
-    const statsTrafficLoadValueEl = document.getElementById('stats-traffic-load-value');
-    const statsTrafficLoadBarEl = document.getElementById('stats-traffic-load-bar');
-    const scanAnimationEl = document.querySelector('.scan-animation');
+    const detectionsTableBody = document.querySelector('.recent-detections-card tbody');
     const ipFilter = document.getElementById('ip-filter');
     const protocolFilter = document.getElementById('protocol-filter');
     const statusFilter = document.getElementById('status-filter');
-    const threatIntelToggle = document.getElementById('threat-intel-toggle'); // Puthu Toggle Switch
-
-    // Logout Modal Elements
+    const threatIntelToggle = document.getElementById('threat-intel-toggle');
+    
+    // Common elements present on both pages
+    const statusIndicatorBox = document.getElementById('status-indicator-box');
+    const statusDot = document.getElementById('status-dot');
+    const statusText = document.getElementById('status-text');
     const logoutButton = document.getElementById('logout-button');
     const logoutModal = document.getElementById('logout-modal');
     const cancelLogoutBtn = document.getElementById('cancel-logout-btn');
     const confirmLogoutBtn = document.getElementById('confirm-logout-btn');
-
-    // IP Action Modal Elements
+    
+    // Modals
     const ipActionModal = document.getElementById('ip-action-modal');
-    const modalTitle = document.getElementById('modal-title');
-    const modalBody = document.getElementById('modal-body');
     const cancelActionBtn = document.getElementById('cancel-action-btn');
     const confirmActionBtn = document.getElementById('confirm-action-btn');
 
@@ -41,217 +28,177 @@ document.addEventListener('DOMContentLoaded', function () {
     // 2. STATE & SOCKET.IO SETUP
     // ==========================================================
     const socket = io();
-    let isMonitoring = false; // Initial state
+    let isMonitoring = false;
     let currentIpToAction = null;
     let currentAction = null;
 
     // ==========================================================
-    // 3. EVENT LISTENERS (ELLA BUTTON CLICKS-UM INGA HANDLE AAGUM)
+    // 3. EVENT LISTENERS (with null checks)
     // ==========================================================
 
-    // Start/Stop Monitor Button
-    startStopBtn.addEventListener('click', () => {
-        const action = !isMonitoring ? 'start' : 'stop';
-        socket.emit('control_monitoring', { 'action': action });
-    });
-    
-    // Puthu Threat Intel Toggle Logic
-    threatIntelToggle.addEventListener('change', function() {
-        const isEnabled = this.checked;
-        socket.emit('toggle_threat_intel', { 'enabled': isEnabled });
-    });
-
-    // Filter Inputs
-    function applyNewFilter() {
-        packetsTableBody.innerHTML = `<tr><td colspan="6" class="text-center p-8 text-slate-400">Listening for packets that match your filter...</td></tr>`;
+    if (startStopBtn) {
+        startStopBtn.addEventListener('click', () => {
+            const action = !isMonitoring ? 'start' : 'stop';
+            socket.emit('control_monitoring', { 'action': action });
+        });
     }
-    ipFilter.addEventListener('keyup', applyNewFilter);
-    protocolFilter.addEventListener('change', applyNewFilter);
-    statusFilter.addEventListener('change', applyNewFilter);
+    
+    if (threatIntelToggle) {
+        threatIntelToggle.addEventListener('change', function() {
+            socket.emit('toggle_threat_intel', { 'enabled': this.checked });
+        });
+    }
 
-    // Logout Logic
-    logoutButton.addEventListener('click', () => { logoutModal.classList.add('active'); });
-    cancelLogoutBtn.addEventListener('click', () => { logoutModal.classList.remove('active'); });
-    confirmLogoutBtn.addEventListener('click', () => { window.location.href = '/logout'; });
-    logoutModal.addEventListener('click', (e) => {
-        if (e.target === logoutModal) { logoutModal.classList.remove('active'); }
-    });
-
-    // Confirmation Modal Logic for Block/Unblock
-    detectionsTableBody.addEventListener('click', function(event) {
-        const actionButton = event.target.closest('.action-btn');
-        if (!actionButton) return;
-
-        currentIpToAction = actionButton.dataset.ip;
-        currentAction = actionButton.dataset.action; // 'block' or 'unblock'
-
-        if (currentAction === 'block') {
-            modalTitle.innerText = 'Confirm Block';
-            modalBody.innerHTML = `Are you sure you want to block IP: <br><strong>${currentIpToAction}</strong>?`;
-            confirmActionBtn.className = 'btn btn-danger';
-            confirmActionBtn.innerText = 'Confirm Block';
-        } else {
-            modalTitle.innerText = 'Confirm Unblock';
-            modalBody.innerHTML = `Are you sure you want to unblock IP: <br><strong>${currentIpToAction}</strong>?`;
-            confirmActionBtn.className = 'btn btn-success';
-            confirmActionBtn.innerText = 'Confirm Unblock';
+    function applyNewFilter() {
+        if (packetsTableBody) {
+            packetsTableBody.innerHTML = `<tr><td colspan="6" class="text-center p-8 text-slate-400">Listening for packets that match your filter...</td></tr>`;
         }
-        ipActionModal.classList.add('active');
-    });
+    }
+    if (ipFilter) ipFilter.addEventListener('keyup', applyNewFilter);
+    if (protocolFilter) protocolFilter.addEventListener('change', applyNewFilter);
+    if (statusFilter) statusFilter.addEventListener('change', applyNewFilter);
 
-    confirmActionBtn.addEventListener('click', () => {
-        if (currentIpToAction && currentAction) {
-            const eventName = `${currentAction}_ip_request`;
-            socket.emit(eventName, { 'ip': currentIpToAction });
+    if (logoutButton) logoutButton.addEventListener('click', () => logoutModal.classList.add('active'));
+    if (cancelLogoutBtn) cancelLogoutBtn.addEventListener('click', () => logoutModal.classList.remove('active'));
+    if (confirmLogoutBtn) confirmLogoutBtn.addEventListener('click', () => { window.location.href = '/logout'; });
+
+    if (detectionsTableBody) {
+        detectionsTableBody.addEventListener('click', function(event) {
+            const actionButton = event.target.closest('.action-btn');
+            if (!actionButton) return;
+
+            currentIpToAction = actionButton.dataset.ip;
+            currentAction = actionButton.dataset.action;
             
-            const buttonInTable = detectionsTableBody.querySelector(`.action-btn[data-ip="${currentIpToAction}"]`);
-            if(buttonInTable) {
-                buttonInTable.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-                buttonInTable.disabled = true;
-            }
-        }
-        ipActionModal.classList.remove('active');
-    });
+            const modalTitle = document.getElementById('modal-title');
+            const modalBody = document.getElementById('modal-body');
 
-    cancelActionBtn.addEventListener('click', () => { ipActionModal.classList.remove('active'); });
+            if (currentAction === 'block') {
+                modalTitle.innerText = 'Confirm Block';
+                modalBody.innerHTML = `Are you sure you want to block IP: <br><strong>${currentIpToAction}</strong>?`;
+            } else {
+                modalTitle.innerText = 'Confirm Unblock';
+                modalBody.innerHTML = `Are you sure you want to unblock IP: <br><strong>${currentIpToAction}</strong>?`;
+            }
+            ipActionModal.classList.add('active');
+        });
+    }
+
+    if (confirmActionBtn) {
+        confirmActionBtn.addEventListener('click', () => {
+            if (currentIpToAction && currentAction) {
+                socket.emit(`${currentAction}_ip_request`, { 'ip': currentIpToAction });
+                const buttonInTable = detectionsTableBody.querySelector(`.action-btn[data-ip="${currentIpToAction}"]`);
+                if(buttonInTable) {
+                    buttonInTable.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                    buttonInTable.disabled = true;
+                }
+            }
+            if (ipActionModal) ipActionModal.classList.remove('active');
+        });
+    }
+    
+    if (cancelActionBtn) cancelActionBtn.addEventListener('click', () => ipActionModal.classList.remove('active'));
 
     // ==========================================================
-    // 4. SOCKET.IO EVENT HANDLERS (BACKEND-LA IRUNDHU VARRA DATA)
+    // 4. SOCKET.IO EVENT HANDLERS
     // ==========================================================
     socket.on('connect', () => console.log('Connected to backend!'));
     
-    // LIVE UPDATE FIX: Backend sniffer run aanaale inga data varum.
-    socket.on('packet_update_batch', (packet_batch) => { packet_batch.forEach(addPacketToTable); });
-    socket.on('new_alert', (alert) => { addDetectionToTable(alert); });
-    socket.on('stats_update', (stats) => { updateStats(stats); });
+    socket.on('packet_update_batch', (packet_batch) => { 
+        if(packetsTableBody) packet_batch.forEach(addPacketToTable); 
+    });
 
-    // Initial monitor status-ah backend-kitta ketu, UI-ah set pannum.
+    socket.on('new_alert', (alert) => { 
+        if(detectionsTableBody) addDetectionToTable(alert);
+    });
+
+    socket.on('stats_update', (stats) => { 
+        // Dashboard page-la mattum irukura elements-ku oru check
+        if(document.getElementById('packets-processed')) {
+            updateStats(stats); 
+        }
+    });
+
     socket.on('monitor_status_update', (data) => {
         isMonitoring = data.is_running;
         updateMonitorStatusUI(isMonitoring);
     });
 
-    // PUDHU CHANGE: Threat Intel status-ah backend-la irundhu vaangi UI-ah update panrom
     socket.on('threat_intel_status_update', (data) => {
-        if (threatIntelToggle) {
-            threatIntelToggle.checked = data.is_enabled;
-        }
+        if (threatIntelToggle) threatIntelToggle.checked = data.is_enabled;
     });
-
-    // Block/Unblock action-oda result
+    
     socket.on('ip_action_status', (data) => {
+        if (!detectionsTableBody) return;
         const button = detectionsTableBody.querySelector(`button[data-ip="${data.ip}"]`);
-        const cell = button?.parentElement;
-        if (!cell) return;
-        
+        if (!button) return;
+        const cell = button.parentElement;
         if (data.success) {
-            if (data.action === 'block') {
-                cell.innerHTML = `<button class="btn btn-success action-btn" style="padding: 5px 10px; font-size: 12px;" data-ip="${data.ip}" data-action="unblock"><i class="fas fa-check"></i> Unblock</button>`;
-            } else {
-                cell.innerHTML = `<button class="btn btn-danger action-btn" style="padding: 5px 10px; font-size: 12px;" data-ip="${data.ip}" data-action="block"><i class="fas fa-ban"></i> Block</button>`;
-            }
+            cell.innerHTML = data.action === 'block' 
+                ? `<button class="btn btn-success action-btn" style="padding: 5px 10px; font-size: 12px;" data-ip="${data.ip}" data-action="unblock"><i class="fas fa-check"></i> Unblock</button>`
+                : `<button class="btn btn-danger action-btn" style="padding: 5px 10px; font-size: 12px;" data-ip="${data.ip}" data-action="block"><i class="fas fa-ban"></i> Block</button>`;
         } else {
             alert(`Failed to ${data.action} IP: ${data.ip}`);
-            // Revert button to original state on failure
             button.innerHTML = data.action === 'block' ? '<i class="fas fa-ban"></i> Block' : '<i class="fas fa-check"></i> Unblock';
             button.disabled = false;
         }
     });
 
     // ==========================================================
-    // 5. UI UPDATE FUNCTIONS (SCREEN-AH UPDATE PANRA LOGIC)
+    // 5. UI UPDATE FUNCTIONS (Corrected and complete)
     // ==========================================================
-
-    function addDetectionToTable(alert) {
-        const placeholder = detectionsTableBody.querySelector('td[colspan="5"]');
-        if(placeholder) placeholder.parentElement.remove();
-        
-        const newRow = detectionsTableBody.insertRow(0);
-        
-        const severityClass = alert.severity.toLowerCase() === 'critical' ? 'text-red-600 font-bold' :
-                              alert.severity.toLowerCase() === 'high' ? 'text-red-400' :
-                              alert.severity.toLowerCase() === 'medium' ? 'text-amber-400' : 'text-blue-400';
-
-        let intelCellHtml = '<td>N/A</td>';
-        if (alert.intel && alert.intel.score !== undefined) {
-            let score = alert.intel.score;
-            let scoreColor = score > 80 ? 'text-red-500' : score > 50 ? 'text-amber-500' : 'text-green-500';
-            intelCellHtml = `<td>
-                                <span class="${scoreColor} font-semibold">${score}%</span>
-                                <span class="text-xs text-slate-400">(${alert.intel.country})</span>
-                             </td>`;
-        }
-
-        let actionCellHtml;
-        if (alert.is_blocked) {
-            actionCellHtml = `<td><button class="btn btn-success action-btn" style="padding: 5px 10px; font-size: 12px;" data-ip="${alert.ip_address}" data-action="unblock"><i class="fas fa-check"></i> Unblock</button></td>`;
-        } else {
-            actionCellHtml = `<td><button class="btn btn-danger action-btn" style="padding: 5px 10px; font-size: 12px;" data-ip="${alert.ip_address}" data-action="block"><i class="fas fa-ban"></i> Block</button></td>`;
-        }
-        
-        newRow.innerHTML = `
-            <td class="font-mono">${alert.ip_address}</td> 
-            <td>${alert.scan_type}</td> 
-            <td><span class="${severityClass}">${alert.severity}</span></td>
-            ${intelCellHtml}
-            ${actionCellHtml}`;
-
-        if (detectionsTableBody.rows.length > 5) { 
-            detectionsTableBody.deleteRow(-1); 
-        }
-    }
     
     function updateMonitorStatusUI(isRunning) {
-        isMonitoring = isRunning; // Make sure our local state is always correct
-        const statusIndicatorBox = document.getElementById('status-indicator-box');
+        const scanAnimationEl = document.querySelector('.scan-animation');
+
         if (isRunning) {
-            startStopBtnIcon.className = 'fas fa-pause';
-            startStopBtnText.innerText = 'Stop Monitor';
-            startStopBtn.classList.remove('btn-success');
-            startStopBtn.classList.add('btn-danger');
+            if(startStopBtn) {
+                startStopBtn.querySelector('i').className = 'fas fa-pause';
+                startStopBtn.querySelector('span').innerText = 'Stop Monitor';
+                startStopBtn.classList.remove('btn-success');
+                startStopBtn.classList.add('btn-danger');
+            }
+            if(scanAnimationEl) {
+                scanAnimationEl.classList.remove('scan-red');
+                scanAnimationEl.classList.add('scan-green');
+            }
+            if(packetsTableBody) applyNewFilter();
+            
             statusIndicatorBox.classList.remove('status-idle');
             statusIndicatorBox.classList.add('status-live');
             statusDot.className = 'status-dot bg-green-500';
             statusText.innerText = 'Live Monitor';
             statusText.classList.remove('text-idle');
             statusText.classList.add('text-live');
-            scanAnimationEl.classList.remove('scan-red');
-            scanAnimationEl.classList.add('scan-green');
-            applyNewFilter(); 
-            detectionsTableBody.innerHTML = '<tr><td colspan="5" class="text-center p-8 text-slate-400">Monitoring for new detections...</td></tr>';
+
         } else {
-            startStopBtnIcon.className = 'fas fa-play';
-            startStopBtnText.innerText = 'Start Monitor';
-            startStopBtn.classList.remove('btn-danger');
-            startStopBtn.classList.add('btn-success');
+             if(startStopBtn) {
+                startStopBtn.querySelector('i').className = 'fas fa-play';
+                startStopBtn.querySelector('span').innerText = 'Start Monitor';
+                startStopBtn.classList.remove('btn-danger');
+                startStopBtn.classList.add('btn-success');
+            }
+            if(scanAnimationEl) {
+                scanAnimationEl.classList.remove('scan-green');
+                scanAnimationEl.classList.add('scan-red');
+            }
+            if(packetsTableBody) packetsTableBody.innerHTML = `<tr><td colspan="6" class="text-center p-8 text-slate-400">Click 'Start Monitor' to see live traffic.</td></tr>`;
+
             statusIndicatorBox.classList.remove('status-live');
             statusIndicatorBox.classList.add('status-idle');
             statusDot.className = 'status-dot bg-red-500 blinking';
             statusText.innerText = 'Monitor Idle';
             statusText.classList.remove('text-live');
             statusText.classList.add('text-idle');
-            scanAnimationEl.classList.remove('scan-green');
-            scanAnimationEl.classList.add('scan-red');
-            packetsTableBody.innerHTML = `<tr><td colspan="6" class="text-center p-8 text-slate-400">Click 'Start Monitor' to see live traffic.</td></tr>`;
         }
     }
 
     function addPacketToTable(packet) {
-        const ipQuery = ipFilter.value.toLowerCase();
-        const protoQuery = protocolFilter.value;
-        const statusQuery = statusFilter.value;
-        const sourceIp = packet.source_ip.toLowerCase();
-        const destIp = packet.dest_ip.toLowerCase();
-        const ipMatch = ipQuery === "" || sourceIp.includes(ipQuery) || destIp.includes(ipQuery);
-        const protoMatch = protoQuery === "" || packet.proto === protoQuery;
-        const statusMatch = statusQuery === "" || packet.status === statusQuery;
-
-        if (! (ipMatch && protoMatch && statusMatch) ) return;
-
         if (packetsTableBody.rows.length > 0 && packetsTableBody.rows[0].cells[0].colSpan > 1) {
             packetsTableBody.innerHTML = '';
         }
-
+        // ... (rest of the function from your original file)
         const newRow = packetsTableBody.insertRow(0);
         let statusBadge = '';
         if (packet.status === 'Scan') statusBadge = '<span class="alert-badge alert-warning">Scan</span>';
@@ -279,19 +226,54 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
     
-    function updateStats(stats){
-        packetsProcessedEl.innerText = stats.packets_processed.toLocaleString();
-        alertsTriggeredEl.innerText = stats.alerts_triggered.toLocaleString();
-        detectedIpsEl.innerText = stats.detected_ips_count.toLocaleString();
-        currentTrafficEl.innerText = `${stats.current_traffic_pps}/s`;
-        statsInterfaceEl.innerText = stats.interface;
-        statsUptimeEl.innerText = stats.uptime;
-        statsAccuracyEl.innerText = `${stats.detection_accuracy}%`;
-        statsTrafficLoadValueEl.innerText = `${stats.traffic_load_percent}%`;
-        statsTrafficLoadBarEl.style.width = `${stats.traffic_load_percent}%`;
+    function updateStats(stats) {
+        document.getElementById('packets-processed').innerText = stats.packets_processed.toLocaleString();
+        document.getElementById('alerts-triggered').innerText = stats.alerts_triggered.toLocaleString();
+        document.getElementById('detected-ips').innerText = stats.detected_ips_count.toLocaleString();
+        document.getElementById('current-traffic').innerText = `${stats.current_traffic_pps}/s`;
+        document.getElementById('stats-interface').innerText = stats.interface;
+        document.getElementById('stats-uptime').innerText = stats.uptime;
+        document.getElementById('stats-accuracy').innerText = `${stats.detection_accuracy}%`;
+        document.getElementById('stats-traffic-load-value').innerText = `${stats.traffic_load_percent}%`;
+        document.getElementById('stats-traffic-load-bar').style.width = `${stats.traffic_load_percent}%`;
         document.getElementById('packets-progress-bar').style.width = `${stats.packets_bar_percent || 0}%`;
         document.getElementById('alerts-progress-bar').style.width = `${stats.alerts_bar_percent || 0}%`;
         document.getElementById('ips-progress-bar').style.width = `${stats.ips_bar_percent || 0}%`;
         document.getElementById('traffic-progress-bar').style.width = `${stats.traffic_bar_percent || 0}%`;
+    }
+
+    // This function for adding detections needs to exist
+    function addDetectionToTable(alert) {
+        const placeholder = detectionsTableBody.querySelector('td[colspan="5"]');
+        if(placeholder) placeholder.parentElement.remove();
+        
+        const newRow = detectionsTableBody.insertRow(0);
+        
+        const severityClass = alert.severity.toLowerCase() === 'critical' ? 'text-red-600 font-bold' : 'text-amber-400';
+
+        let intelCellHtml = '<td>N/A</td>';
+        if (alert.intel && alert.intel.score !== undefined) {
+            let score = alert.intel.score;
+            let scoreColor = score > 80 ? 'text-red-500' : score > 50 ? 'text-amber-500' : 'text-green-500';
+            intelCellHtml = `<td>
+                                <span class="${scoreColor} font-semibold">${score}%</span>
+                                <span class="text-xs text-slate-400">(${alert.intel.country})</span>
+                             </td>`;
+        }
+
+        const actionCellHtml = alert.is_blocked
+            ? `<td><button class="btn btn-success action-btn" style="padding: 5px 10px; font-size: 12px;" data-ip="${alert.ip_address}" data-action="unblock"><i class="fas fa-check"></i> Unblock</button></td>`
+            : `<td><button class="btn btn-danger action-btn" style="padding: 5px 10px; font-size: 12px;" data-ip="${alert.ip_address}" data-action="block"><i class="fas fa-ban"></i> Block</button></td>`;
+        
+        newRow.innerHTML = `
+            <td class="font-mono">${alert.ip_address}</td> 
+            <td>${alert.scan_type}</td> 
+            <td><span class="${severityClass}">${alert.severity}</span></td>
+            ${intelCellHtml}
+            ${actionCellHtml}`;
+
+        if (detectionsTableBody.rows.length > 5) { 
+            detectionsTableBody.deleteRow(-1); 
+        }
     }
 });

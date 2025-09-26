@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Port Sentinel{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon"> <i class="fas fa-shield-alt"></i> </div>
+                    <span>Port Sentinel</span>
+                </div>
+            </div>
+            <nav>
+                <a href="{{ url_for('index') }}" class="nav-item {% if request.endpoint == 'index' %}active{% endif %}">
+                    <i class="fas fa-home"></i> <span>Dashboard</span>
+                </a>
+                <a href="{{ url_for('traffic_monitor') }}" class="nav-item {% if request.endpoint == 'traffic_monitor' %}active{% endif %}">
+                    <i class="fas fa-network-wired"></i> <span>Traffic Monitor</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="profile" id="logout-button" style="cursor: pointer;">
+                    <div class="profile-avatar"><i class="fas fa-user"></i></div>
+                    <div class="profile-name">{{ username|title }}</div>
+                    <div style="margin-left: auto; padding-right: 12px; color: hsl(var(--muted-foreground));">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        
+        <main class="main-content">
+            <header class="dashboard-header glass-card">
+                <div class="flex items-center gap-4">
+                    <div class="header-icon"> <i class="fas fa-shield-alt text-white text-3xl"></i> </div>
+                    <div class="header-title">
+                        <h1>Port Sentinel</h1>
+                        <p>Advanced Network Security Monitoring</p>
+                    </div>
+                </div>
+                <div id="status-indicator-box" class="status-indicator status-idle">
+                    <div id="status-dot" class="status-dot bg-red-500 blinking"></div>
+                    <div>
+                        <span class="text-xs text-slate-400">System Status</span>
+                        <div id="status-text" class="font-semibold text-idle">Monitor Idle</div>
+                    </div>
+                </div>
+            </header>
+            
+            <div class="content-wrapper">
+                {% block content %}
+                {% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="logout-modal">
+        <div class="modal-content">
+            <h3>Confirm Logout</h3>
+            <p>Are you sure you want to logout?</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="cancel-logout-btn">Cancel</button>
+                <button class="btn btn-danger" id="confirm-logout-btn">Logout</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

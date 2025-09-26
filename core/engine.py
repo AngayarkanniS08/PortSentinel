@@ -54,7 +54,7 @@ class DetectionEngine:
         self.report_times = {}  # To avoid spamming alerts
         self.alert_count = 0
         self.detected_ips = set()
-        self.threat_intel_enabled = True 
+        self.threat_intel_enabled = False
         ABUSEIPDB_API_KEY = "c8aba3b6eb35cdbc110bbde4ee84e3dac9cbed1d93c5ce9f4cad596fe618fc975abd88306c988a99" # <-- UNGA API KEY-AH INGA PODUNGA
         self.threat_intel = ThreatIntel(ABUSEIPDB_API_KEY)
         

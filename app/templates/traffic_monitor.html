@@ -1,0 +1,59 @@
+{% extends "layout.html" %}
+
+{% block title %}Traffic Monitor - Port Sentinel{% endblock %}
+
+{% block content %}
+
+<div class="card glass-card">
+    <div class="card-header flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <i class="fas fa-radar"></i> Network Traffic Monitor
+            <div class="scan-animation scan-red ml-2"></div>
+        </div>
+    
+        <div class="flex items-center gap-4">
+            <div id="threat-intel-control" class="threat-intel-toggle-container">
+                <span class="toggle-label">Threat Intel</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="threat-intel-toggle" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <button id="start-stop-btn" class="btn btn-success">
+                <i class="fas fa-play"></i><span>Start Monitor</span>
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="filter-panel">
+            <div class="flex gap-4">
+                <select id="protocol-filter" class="filter-select">
+                    <option value="">All Protocols</option>
+                    <option value="TCP">TCP</option>
+                    <option value="UDP">UDP</option>
+                    <option value="ICMP">ICMP</option>
+                </select>
+                <select id="status-filter" class="filter-select">
+                    <option value="">All Statuses</option>
+                    <option value="Allowed">Allowed</option>
+                    <option value="Scan">Scan</option>
+                    <option value="Blocked">Blocked</option>
+                </select>
+            </div>
+            <input type="text" id="ip-filter" class="filter-input" placeholder="Filter by IP Address...">
+        </div>
+
+        <div class="table-container traffic-table-container" style="max-height: 850px;">
+            <table>
+                <thead>
+                    <tr><th>SNO</th><th>TIME</th><th>PROTO</th><th>SOURCE</th><th>DESTINATION</th><th>STATUS</th></tr>
+                </thead>
+                <tbody id="packets-table-body">
+                    <tr><td colspan="6" class="text-center p-8 text-slate-400">Click 'Start Monitor' to see live traffic.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
