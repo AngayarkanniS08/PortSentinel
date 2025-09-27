@@ -2,16 +2,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // ==========================================================
     // 1. ELEMENT SELECTIONS
     // ==========================================================
-    // Sidebar Elements
-    const sidebar = document.getElementById('sidebar');
-    const mainContent = document.getElementById('main-content');
-    const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
-    
-    // Page-specific Buttons
     const trafficStartStopBtn = document.getElementById('start-stop-btn');
     const dashboardStartStopBtn = document.getElementById('dashboard-start-stop-btn');
-    
-    // Other UI Elements
     const packetsTableBody = document.getElementById('packets-table-body');
     const detectionsTableBody = document.querySelector('.recent-detections-card tbody');
     const ipFilter = document.getElementById('ip-filter');
@@ -41,35 +33,17 @@ document.addEventListener('DOMContentLoaded', function () {
     // 3. EVENT LISTENERS
     // ==========================================================
 
-    // Sidebar Toggle Logic
-    if (sidebarToggleBtn) {
-        sidebarToggleBtn.addEventListener('click', () => {
-            sidebar.classList.toggle('sidebar-collapsed');
-            mainContent.classList.toggle('main-content-expanded');
-            
-            // Save sidebar state to localStorage
-            if (sidebar.classList.contains('sidebar-collapsed')) {
-                localStorage.setItem('sidebarState', 'collapsed');
-            } else {
-                localStorage.setItem('sidebarState', 'expanded');
-            }
-        });
-    }
-
-    // Check sidebar state on page load
-    if (localStorage.getItem('sidebarState') === 'collapsed') {
-        if(sidebar) sidebar.classList.add('sidebar-collapsed');
-        if(mainContent) mainContent.classList.add('main-content-expanded');
-    }
-
-    // Combined Start/Stop Button Logic
     function handleStartStopClick() {
         const action = !isMonitoring ? 'start' : 'stop';
         socket.emit('control_monitoring', { 'action': action });
     }
 
-    if (trafficStartStopBtn) trafficStartStopBtn.addEventListener('click', handleStartStopClick);
-    if (dashboardStartStopBtn) dashboardStartStopBtn.addEventListener('click', handleStartStopClick);
+    if (trafficStartStopBtn) {
+        trafficStartStopBtn.addEventListener('click', handleStartStopClick);
+    }
+    if (dashboardStartStopBtn) {
+        dashboardStartStopBtn.addEventListener('click', handleStartStopClick);
+    }
 
     if (threatIntelToggle) {
         threatIntelToggle.addEventListener('change', function() {
@@ -77,7 +51,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Filter Logic
     function applyNewFilter() {
         if (packetsTableBody) {
             packetsTableBody.innerHTML = `<tr><td colspan="6" class="text-center p-8 text-slate-400">Listening for packets that match your filter...</td></tr>`;
@@ -87,7 +60,6 @@ document.addEventListener('DOMContentLoaded', function () {
     if (protocolFilter) protocolFilter.addEventListener('change', applyNewFilter);
     if (statusFilter) statusFilter.addEventListener('change', applyNewFilter);
 
-    // Modal Logic
     if (logoutButton) logoutButton.addEventListener('click', () => logoutModal.classList.add('active'));
     if (cancelLogoutBtn) cancelLogoutBtn.addEventListener('click', () => logoutModal.classList.remove('active'));
     if (confirmLogoutBtn) confirmLogoutBtn.addEventListener('click', () => { window.location.href = '/logout'; });
@@ -186,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if(dashboardStartStopBtn) {
                 dashboardStartStopBtn.querySelector('i').className = 'fas fa-pause';
                 dashboardStartStopBtn.querySelector('span').innerText = 'Stop Sentinel';
-                dashboardStartStopBtn.classList.remove('btn-deploy'); // Use btn-deploy for custom styles
+                dashboardStartStopBtn.classList.remove('btn-success');
                 dashboardStartStopBtn.classList.add('btn-danger');
             }
             if(scanAnimationEl) {
@@ -210,7 +182,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 dashboardStartStopBtn.querySelector('i').className = 'fas fa-play';
                 dashboardStartStopBtn.querySelector('span').innerText = 'Deploy Sentinel';
                 dashboardStartStopBtn.classList.remove('btn-danger');
-                dashboardStartStopBtn.classList.add('btn-deploy'); // Use btn-deploy for custom styles
+                dashboardStartStopBtn.classList.add('btn-success');
             }
             if(scanAnimationEl) {
                 scanAnimationEl.classList.remove('scan-green');
