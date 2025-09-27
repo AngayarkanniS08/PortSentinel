@@ -21,10 +21,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const cancelActionBtn = document.getElementById('cancel-action-btn');
     const confirmActionBtn = document.getElementById('confirm-action-btn');
 
-    const threatIntelModal = document.getElementById('threat-intel-modal');
-    const cancelThreatIntelBtn = document.getElementById('cancel-threat-intel-btn');
-    const confirmThreatIntelBtn = document.getElementById('confirm-threat-intel-btn');
-
     // ==========================================================
     // 2. STATE & SOCKET.IO SETUP
     // ==========================================================
@@ -50,39 +46,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (threatIntelToggle) {
-        threatIntelToggle.addEventListener('click', function(event) {
-            event.preventDefault(); // Immediately change aaguratha thadukkurom
-            
-            const isEnabling = this.checked;
-            const modalTitle = document.getElementById('threat-intel-modal-title');
-            const modalBody = document.getElementById('threat-intel-modal-body');
-            const confirmBtn = document.getElementById('confirm-threat-intel-btn');
-
-            if (isEnabling) {
-                modalTitle.innerText = 'Enable Threat Intelligence?';
-                modalBody.innerHTML = "Are you sure you want to <strong>enable</strong> Threat Intelligence? This will check suspicious IPs against a live database.";
-                confirmBtn.className = 'btn btn-success';
-                confirmBtn.innerText = 'Enable';
-            } else {
-                modalTitle.innerText = 'Disable Threat Intelligence?';
-                modalBody.innerHTML = "Are you sure you want to <strong>disable</strong> Threat Intelligence? IPs will no longer be checked against the threat database.";
-                confirmBtn.className = 'btn btn-danger';
-                confirmBtn.innerText = 'Disable';
-            }
-
-            threatIntelModal.classList.add('active');
-
-            // Puthu confirmation logic
-            confirmThreatIntelBtn.onclick = () => {
-                threatIntelToggle.checked = isEnabling; // Ippo switch-oda state-ah maathrom
-                socket.emit('toggle_threat_intel', { 'enabled': isEnabling });
-                threatIntelModal.classList.remove('active');
-            };
-
-            cancelThreatIntelBtn.onclick = () => {
-                threatIntelToggle.checked = !isEnabling; // User cancel sonna, pazhaya state-ke kondu poidrom
-                threatIntelModal.classList.remove('active');
-            };
+        threatIntelToggle.addEventListener('change', function() {
+            socket.emit('toggle_threat_intel', { 'enabled': this.checked });
         });
     }
 
