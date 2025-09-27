@@ -536,3 +536,94 @@
 .btn-deploy.btn-danger:hover {
     box-shadow: 0 0 20px rgba(255, 71, 87, 0.6);
 }
+
+/* --- PUTHU UPGRADE: COLLAPSIBLE SIDEBAR-KU STYLE --- */
+
+/* Sidebar-oda default transition (animation) */
+.sidebar, .main-content {
+    transition: all 0.3s ease-in-out;
+}
+
+/* Toggle button-oda style */
+.btn-icon {
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    color: #94a3b8;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.btn-icon:hover {
+    background: var(--primary);
+    color: white;
+}
+.btn-icon i {
+    transition: transform 0.3s ease;
+}
+
+/* Sidebar chinna aagum bothu (sidebar-collapsed class add aana) */
+.sidebar.sidebar-collapsed {
+    width: 80px; /* Chinna width */
+}
+
+/* Logo text-ah hide panrom */
+.sidebar.sidebar-collapsed #logo-text {
+    display: none;
+}
+
+/* Navigation link text-ah hide panrom */
+.sidebar.sidebar-collapsed .nav-item span,
+.sidebar.sidebar-collapsed .profile-name {
+    display: none;
+}
+
+/* Nav items-ah center panrom */
+.sidebar.sidebar-collapsed .nav-item,
+.sidebar.sidebar-collapsed .profile {
+    justify-content: center;
+}
+
+/* Arrow icon-ah rotate panrom */
+.sidebar.sidebar-collapsed #sidebar-toggle-btn i {
+    transform: rotate(180deg);
+}
+
+/* Main content area-va expand panrom */
+.main-content.main-content-expanded {
+    margin-left: 80px;
+    width: calc(100% - 80px);
+}
+
+/* --- PUTHU UPGRADE: COLLAPSED SIDEBAR-LA LOGO & PROFILE MATTUM HIDE PANROM --- */
+
+/* Sidebar chinna aagum bothu, antha logo-va hide panrom */
+.sidebar.sidebar-collapsed .logo {
+    display: none;
+}
+
+/* Toggle button-ah sariya right-la align panrom */
+.sidebar.sidebar-collapsed .sidebar-header {
+    justify-content: flex-end; /* Aligns the button to the right */
+    padding: 24px 24px;
+}
+
+/* Profile-oda avatar and name-ah hide panrom */
+.sidebar.sidebar-collapsed .profile-avatar,
+.sidebar.sidebar-collapsed .profile-name {
+    display: none;
+}
+
+/* Logout icon-oda style */
+.logout-icon-container {
+    margin-left: auto;
+    padding-right: 12px;
+    color: hsl(var(--muted-foreground));
+}
+
+/* Sidebar chinna aagum bothu, logout icon-ah center panrom */
+.sidebar.sidebar-collapsed .logout-icon-container {
+    margin-left: 0;
+    padding-right: 0;
+}
