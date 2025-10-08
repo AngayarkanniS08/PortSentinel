@@ -1,14 +1,11 @@
 from flask import Flask, render_template
 from flask_socketio import SocketIO
 from flask_login import LoginManager, login_required, current_user
-<<<<<<< HEAD
 from . import auth_routes
 from . import oauth_handler
 
-=======
 import subprocess
 import sys
->>>>>>> 6efe415410bd0b2979caa1b0deaae496d771efeb
 
 # --- PUDHU CHANGE: Namma auth_routes file-ah import panrom ---
 from .auth_routes import init_auth_routes

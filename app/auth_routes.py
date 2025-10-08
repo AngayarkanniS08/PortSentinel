@@ -49,35 +49,60 @@ def init_auth_routes(app, db):
 
     @app.route('/login/google/callback')
     def google_callback():
-        """Google OAuth callback-ah handle panrom"""
-        user_info = oauth_handler.handle_google_callback()
-        
-        if not user_info:
-            flash('Google login fail aayiduchu. Meela try pannunga.')
-            return redirect(url_for('login'))
-        
-        # Google ID vachi user irukkaa nu check panrom
-        user = db.find_user_by_google_id(user_info['google_id'])
-        
-        if not user:
-            # Email already exist aana local user-ah check panrom
-            existing_user = db.find_user_by_email(user_info['email'])
-            if existing_user:
-                flash('Intha email already local login use pannirukku. Regular login use pannunga.')
+        """Handle Google OAuth callback"""
+        session = None  # Track the database session
+        try:
+            print("🔍 Google callback started")
+            
+            user_info = oauth_handler.handle_google_callback()
+            print(f"🔍 User info received: {user_info}")
+            
+            if not user_info:
+                flash('Google login failed. Please try again.')
                 return redirect(url_for('login'))
             
-            # Pudhu Google user-ah create panrom
-            user = db.add_google_user(
-                google_id=user_info['google_id'],
-                email=user_info['email'],
-                username=user_info['username'],
-                picture=user_info['picture']
-            )
-            flash('Google use panni account create aayiduchu!')
-        
-        # User-ah login panrom
-        login_user(user)
-        return redirect(url_for('index'))
+            print(f"🔍 Looking for user with Google ID: {user_info['google_id']}")
+            
+            # Get user AND session
+            user= db.find_user_by_google_id(user_info['google_id'])
+            print(f"🔍 User found: {user}")
+            
+            if not user:
+                print(f"🔍 Creating new user for: {user_info['email']}")
+                # Check if email exists
+                existing_user = db.find_user_by_email(user_info['email'])
+    
+                if existing_user:
+                    flash('This email is already registered with local login.')
+                    
+                    return redirect(url_for('login'))
+                
+                # Create new user - returns user AND session
+                user = db.add_google_user(
+                    google_id=user_info['google_id'],
+                    email=user_info['email'],
+                    username=user_info['username'],
+                    picture=user_info['picture']
+                )
+                
+                flash('Account created successfully with Google!')
+            
+            # Log the user in (user is still attached to session)
+            login_user(user)
+            print("✅ User logged in successfully")
+
+                
+            return redirect(url_for('index'))
+            
+        except Exception as e:
+            print(f"🔥 GOOGLE CALLBACK CRASHED: {e}")
+            import traceback
+            traceback.print_exc()
+            # Clean up session on error
+            if session:
+                session.close()
+            flash('Internal server error during Google login')
+            return redirect(url_for('login'))
 
     @app.route('/register', methods=['GET', 'POST'])
     def register():

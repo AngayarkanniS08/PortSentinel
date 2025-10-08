@@ -1,11 +1,11 @@
 from authlib.integrations.flask_client import OAuth
 from flask import redirect, url_for, session
-import requests        app/__pycache__/oauth_handler.cpython-312.py        app/__pycache__/oauth_handler.cpython-312.py
+import requests             
 from .oauth_config import OAuthConfig
-        app/__pycache__/oauth_handler.cpython-312.py
+        
 class GoogleOAuthHandler:
     def __init__(self, app=None):
-        self.oauth = OAuth()        app/__pycache__/oauth_handler.cpython-312.py
+        self.oauth = OAuth()        
         if app:
             self.setup_oauth(app)
     
@@ -18,7 +18,7 @@ class GoogleOAuthHandler:
             client_secret=OAuthConfig.CLIENT_SECRET,
             server_metadata_url=OAuthConfig.DISCOVERY_URL,
             client_kwargs={
-                'scope': 'openid email profiaddafle'
+                'scope': 'openid email profile'
             }
         )
         
