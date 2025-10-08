@@ -25,6 +25,9 @@
                 <a href="{{ url_for('traffic_monitor') }}" class="nav-item {% if request.endpoint == 'traffic_monitor' %}active{% endif %}">
                     <i class="fas fa-network-wired"></i> <span>Traffic Monitor</span>
                 </a>
+                <a href="{{ url_for('ai_manager') }}" class="nav-item {% if request.endpoint == 'ai_manager' %}active{% endif %}">
+                    <i class="fas fa-brain"></i> <span>AI Manager</span>
+                </a
             </nav>
             <div class="sidebar-footer">
                 <div class="profile" id="logout-button" style="cursor: pointer;">

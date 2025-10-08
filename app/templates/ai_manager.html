@@ -1,0 +1,126 @@
+{% extends "layout.html" %}
+
+{% block title %}AI Manager - Port Sentinel{% endblock %}
+
+{% block content %}
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    
+    <div class="card glass-card">
+        <div class="card-header">
+            <i class="fas fa-database"></i>
+            <span>Phase 1: Data Collection</span>
+        </div>
+        <div class="card-body p-6">
+            <p class="text-slate-400 mb-4">
+                "Normal" network traffic epdi irukum-nu AI model-ku solli kudukurathukku, namma mothalla konja neram data-va capture pannanum.
+            </p>
+            <p class="text-slate-400 mb-6">
+                <strong>Note:</strong> Unga network normal-ah use aagura time-la itha run pannunga.
+            </p>
+            <button id="start-collection-btn" class="btn btn-primary w-full">
+                <i class="fas fa-play-circle"></i>
+                <span>Start Data Collection (5 Mins)</span>
+            </button>
+            <div id="collection-status" class="mt-4 p-3 bg-slate-800 rounded-lg text-left text-sm text-amber-400 font-mono" style="display: none; min-height: 50px; white-space: pre-wrap; word-wrap: break-word;"></div>
+        </div>
+    </div>
+
+    <div class="card glass-card">
+        <div class="card-header">
+            <i class="fas fa-cogs"></i>
+            <span>Phase 2: Model Training</span>
+        </div>
+        <div class="card-body p-6">
+            <p class="text-slate-400 mb-4">
+                Namma capture panna data-va vechi, puthu AI model-ah train pannalam. Ithu konja neram eduthukalam.
+            </p>
+            <p class="text-slate-400 mb-6">
+                <strong>Note:</strong> Data collection mudinjathuku aprom mattum itha seiyunga.
+            </p>
+            <button id="start-training-btn" class="btn btn-deploy w-full">
+                <i class="fas fa-brain"></i>
+                <span>Train AI Model</span>
+            </button>
+             <div id="training-status" class="mt-4 p-3 bg-slate-800 rounded-lg text-left text-sm text-green-400 font-mono" style="display: none; min-height: 50px; white-space: pre-wrap; word-wrap: break-word;"></div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const socket = io();
+
+    // --- Element-ah select panrom ---
+    const collectionBtn = document.getElementById('start-collection-btn');
+    const trainingBtn = document.getElementById('start-training-btn');
+    const collectionStatusDiv = document.getElementById('collection-status');
+    const trainingStatusDiv = document.getElementById('training-status');
+
+    let isProcessRunning = false;
+
+    // --- Data Collection Button Logic ---
+    collectionBtn.addEventListener('click', function() {
+        if (isProcessRunning) {
+            alert("Oru process run aagitu irukku. Please wait.");
+            return;
+        }
+        
+        isProcessRunning = true;
+        collectionBtn.disabled = true;
+        trainingBtn.disabled = true;
+        collectionBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Collecting...</span>';
+        
+        collectionStatusDiv.style.display = 'block';
+        collectionStatusDiv.textContent = '▶️ Starting data collection...';
+        
+        // Backend-ku request anupurom
+        socket.emit('start_data_collection', {});
+    });
+
+    // --- Model Training Button Logic ---
+    trainingBtn.addEventListener('click', function() {
+        if (isProcessRunning) {
+            alert("Oru process run aagitu irukku. Please wait.");
+            return;
+        }
+        
+        isProcessRunning = true;
+        collectionBtn.disabled = true;
+        trainingBtn.disabled = true;
+        trainingBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Training...</span>';
+        
+        trainingStatusDiv.style.display = 'block';
+        trainingStatusDiv.textContent = '▶️ Starting model training...';
+
+        // Backend-ku request anupurom
+        socket.emit('start_model_training', {});
+    });
+
+    // --- Backend-la irundhu vara status messages-ah vaangi kaaturom ---
+    socket.on('ai_manager_status', function(data) {
+        const message = data.message;
+
+        if (message.includes('Collection')) {
+            collectionStatusDiv.style.display = 'block';
+            collectionStatusDiv.textContent += '\n' + message;
+        } else {
+            trainingStatusDiv.style.display = 'block';
+            trainingStatusDiv.textContent += '\n' + message;
+        }
+        
+        // Process mudinjuruchu-nu therinja, buttons-ah re-enable pannurom
+        if (message.includes('✅') || message.includes('🎉') || message.includes('❌')) {
+            isProcessRunning = false;
+            collectionBtn.disabled = false;
+            trainingBtn.disabled = false;
+            collectionBtn.innerHTML = '<i class="fas fa-play-circle"></i> <span>Start Data Collection (5 Mins)</span>';
+            trainingBtn.innerHTML = '<i class="fas fa-brain"></i> <span>Train AI Model</span>';
+        }
+    });
+});
+</script>
+{% endblock %}

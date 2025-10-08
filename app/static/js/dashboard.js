@@ -20,11 +20,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const ipActionModal = document.getElementById('ip-action-modal');
     const cancelActionBtn = document.getElementById('cancel-action-btn');
     const confirmActionBtn = document.getElementById('confirm-action-btn');
-
     const threatIntelModal = document.getElementById('threat-intel-modal');
     const cancelThreatIntelBtn = document.getElementById('cancel-threat-intel-btn');
     const confirmThreatIntelBtn = document.getElementById('confirm-threat-intel-btn');
-
 
     // ==========================================================
     // 2. STATE & SOCKET.IO SETUP
@@ -51,9 +49,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (threatIntelToggle) {
-                threatIntelToggle.addEventListener('click', function(event) {
-            event.preventDefault(); // Immediately change aaguratha thadukkurom
-            
+        threatIntelToggle.addEventListener('click', function (event) {
+            event.preventDefault();
             const isEnabling = this.checked;
             const modalTitle = document.getElementById('threat-intel-modal-title');
             const modalBody = document.getElementById('threat-intel-modal-body');
@@ -73,15 +70,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
             threatIntelModal.classList.add('active');
 
-            // Puthu confirmation logic
             confirmThreatIntelBtn.onclick = () => {
-                threatIntelToggle.checked = isEnabling; // Ippo switch-oda state-ah maathrom
+                threatIntelToggle.checked = isEnabling;
                 socket.emit('toggle_threat_intel', { 'enabled': isEnabling });
                 threatIntelModal.classList.remove('active');
             };
 
             cancelThreatIntelBtn.onclick = () => {
-                threatIntelToggle.checked = !isEnabling; // User cancel sonna, pazhaya state-ke kondu poidrom
+                threatIntelToggle.checked = !isEnabling;
                 threatIntelModal.classList.remove('active');
             };
         });
@@ -101,7 +97,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (confirmLogoutBtn) confirmLogoutBtn.addEventListener('click', () => { window.location.href = '/logout'; });
 
     if (detectionsTableBody) {
-        detectionsTableBody.addEventListener('click', function(event) {
+        detectionsTableBody.addEventListener('click', function (event) {
             const actionButton = event.target.closest('.action-btn');
             if (!actionButton) return;
             currentIpToAction = actionButton.dataset.ip;
@@ -124,7 +120,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (currentIpToAction && currentAction) {
                 socket.emit(`${currentAction}_ip_request`, { 'ip': currentIpToAction });
                 const buttonInTable = detectionsTableBody.querySelector(`.action-btn[data-ip="${currentIpToAction}"]`);
-                if(buttonInTable) {
+                if (buttonInTable) {
                     buttonInTable.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                     buttonInTable.disabled = true;
                 }
@@ -132,24 +128,24 @@ document.addEventListener('DOMContentLoaded', function () {
             if (ipActionModal) ipActionModal.classList.remove('active');
         });
     }
-    
+
     if (cancelActionBtn) cancelActionBtn.addEventListener('click', () => ipActionModal.classList.remove('active'));
 
     // ==========================================================
     // 4. SOCKET.IO EVENT HANDLERS
     // ==========================================================
     socket.on('connect', () => console.log('Connected to backend!'));
-    
-    socket.on('packet_update_batch', (packet_batch) => { 
-        if(packetsTableBody) packet_batch.forEach(addPacketToTable); 
+
+    socket.on('packet_update_batch', (packet_batch) => {
+        if (packetsTableBody) packet_batch.forEach(addPacketToTable);
     });
 
-    socket.on('new_alert', (alert) => { 
-        if(detectionsTableBody) addDetectionToTable(alert);
+    socket.on('new_alert', (alert) => {
+        if (detectionsTableBody) addDetectionToTable(alert);
     });
 
-    socket.on('stats_update', (stats) => { 
-        if(document.getElementById('packets-processed')) updateStats(stats);
+    socket.on('stats_update', (stats) => {
+        if (document.getElementById('packets-processed')) updateStats(stats);
     });
 
     socket.on('monitor_status_update', (data) => {
@@ -160,14 +156,14 @@ document.addEventListener('DOMContentLoaded', function () {
     socket.on('threat_intel_status_update', (data) => {
         if (threatIntelToggle) threatIntelToggle.checked = data.is_enabled;
     });
-    
+
     socket.on('ip_action_status', (data) => {
         if (!detectionsTableBody) return;
         const button = detectionsTableBody.querySelector(`button[data-ip="${data.ip}"]`);
         if (!button) return;
         const cell = button.parentElement;
         if (data.success) {
-            cell.innerHTML = data.action === 'block' 
+            cell.innerHTML = data.action === 'block'
                 ? `<button class="btn btn-success action-btn" style="padding: 5px 10px; font-size: 12px;" data-ip="${data.ip}" data-action="unblock"><i class="fas fa-check"></i> Unblock</button>`
                 : `<button class="btn btn-danger action-btn" style="padding: 5px 10px; font-size: 12px;" data-ip="${data.ip}" data-action="block"><i class="fas fa-ban"></i> Block</button>`;
         } else {
@@ -180,24 +176,24 @@ document.addEventListener('DOMContentLoaded', function () {
     // ==========================================================
     // 5. UI UPDATE FUNCTIONS
     // ==========================================================
-    
+
     function updateMonitorStatusUI(isRunning) {
         const scanAnimationEl = document.querySelector('.scan-animation');
 
         if (isRunning) {
-            if(trafficStartStopBtn) {
+            if (trafficStartStopBtn) {
                 trafficStartStopBtn.querySelector('i').className = 'fas fa-pause';
                 trafficStartStopBtn.querySelector('span').innerText = 'Stop Monitor';
                 trafficStartStopBtn.classList.remove('btn-success');
                 trafficStartStopBtn.classList.add('btn-danger');
             }
-            if(dashboardStartStopBtn) {
+            if (dashboardStartStopBtn) {
                 dashboardStartStopBtn.querySelector('i').className = 'fas fa-pause';
                 dashboardStartStopBtn.querySelector('span').innerText = 'Stop Sentinel';
                 dashboardStartStopBtn.classList.remove('btn-success');
                 dashboardStartStopBtn.classList.add('btn-danger');
             }
-            if(scanAnimationEl) {
+            if (scanAnimationEl) {
                 scanAnimationEl.classList.remove('scan-red');
                 scanAnimationEl.classList.add('scan-green');
             }
@@ -208,23 +204,23 @@ document.addEventListener('DOMContentLoaded', function () {
             statusText.classList.remove('text-idle');
             statusText.classList.add('text-live');
         } else {
-            if(trafficStartStopBtn) {
+            if (trafficStartStopBtn) {
                 trafficStartStopBtn.querySelector('i').className = 'fas fa-play';
                 trafficStartStopBtn.querySelector('span').innerText = 'Start Monitor';
                 trafficStartStopBtn.classList.remove('btn-danger');
                 trafficStartStopBtn.classList.add('btn-success');
             }
-            if(dashboardStartStopBtn) {
+            if (dashboardStartStopBtn) {
                 dashboardStartStopBtn.querySelector('i').className = 'fas fa-play';
                 dashboardStartStopBtn.querySelector('span').innerText = 'Deploy Sentinel';
                 dashboardStartStopBtn.classList.remove('btn-danger');
                 dashboardStartStopBtn.classList.add('btn-success');
             }
-            if(scanAnimationEl) {
+            if (scanAnimationEl) {
                 scanAnimationEl.classList.remove('scan-green');
                 scanAnimationEl.classList.add('scan-red');
             }
-            if(packetsTableBody) packetsTableBody.innerHTML = `<tr><td colspan="6" class="text-center p-8 text-slate-400">Click 'Start Monitor' to see live traffic.</td></tr>`;
+            if (packetsTableBody) packetsTableBody.innerHTML = `<tr><td colspan="6" class="text-center p-8 text-slate-400">Click 'Start Monitor' to see live traffic.</td></tr>`;
             statusIndicatorBox.classList.remove('status-live');
             statusIndicatorBox.classList.add('status-idle');
             statusDot.className = 'status-dot bg-red-500 blinking';
@@ -243,7 +239,7 @@ document.addEventListener('DOMContentLoaded', function () {
         else if (packet.status === 'Blocked') statusBadge = '<span class="alert-badge alert-critical">Blocked</span>';
         else statusBadge = '<span class="alert-badge alert-info">Allowed</span>';
         let protoBadge = '';
-        switch(packet.proto.toUpperCase()) {
+        switch (packet.proto.toUpperCase()) {
             case 'TCP': protoBadge = '<span class="proto-badge proto-tcp">TCP</span>'; break;
             case 'UDP': protoBadge = '<span class="proto-badge proto-udp">UDP</span>'; break;
             case 'ICMP': protoBadge = '<span class="proto-badge proto-icmp">ICMP</span>'; break;
@@ -252,12 +248,22 @@ document.addEventListener('DOMContentLoaded', function () {
         newRow.innerHTML = `<td>${packet.sno}</td><td>${packet.time}</td><td>${protoBadge}</td><td class="font-mono">${packet.source_ip}</td><td class="font-mono">${packet.dest_ip}</td><td>${statusBadge}</td>`;
         if (packetsTableBody.rows.length > 200) packetsTableBody.deleteRow(-1);
     }
-    
+
     function updateStats(stats) {
-        if(!document.getElementById('packets-processed')) return;
+        if (!document.getElementById('packets-processed')) return;
         document.getElementById('packets-processed').innerText = stats.packets_processed.toLocaleString();
         document.getElementById('alerts-triggered').innerText = stats.alerts_triggered.toLocaleString();
         document.getElementById('detected-ips').innerText = stats.detected_ips_count.toLocaleString();
+
+        // --- PUTHU CHANGE INGA IRUKKU ---
+        if (document.getElementById('anomalies-detected')) {
+            document.getElementById('anomalies-detected').innerText = stats.anomalies_detected.toLocaleString();
+        }
+        if (document.getElementById('anomalies-progress-bar')) {
+            document.getElementById('anomalies-progress-bar').style.width = `${stats.anomalies_bar_percent || 0}%`;
+        }
+        // --- MUDINJATHU ---
+
         document.getElementById('current-traffic').innerText = `${stats.current_traffic_pps}/s`;
         document.getElementById('stats-interface').innerText = stats.interface;
         document.getElementById('stats-uptime').innerText = stats.uptime;
@@ -271,21 +277,35 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function addDetectionToTable(alert) {
-        if(!detectionsTableBody) return;
-        const placeholder = detectionsTableBody.querySelector('td[colspan="5"]');
-        if(placeholder) placeholder.parentElement.remove();
+        if (!detectionsTableBody) return;
+        const placeholder = detectionsTableBody.querySelector('td[colspan="6"]'); // Maathiyachu
+        if (placeholder) placeholder.parentElement.remove();
         const newRow = detectionsTableBody.insertRow(0);
         const severityClass = alert.severity.toLowerCase() === 'critical' ? 'text-red-600 font-bold' : alert.severity.toLowerCase() === 'high' ? 'text-red-400' : 'text-amber-400';
+        
+        // --- PUTHU CHANGE INGA IRUKKU ---
+        let sourceCellHtml = '';
+        if (alert.scan_type.includes('ML Anomaly')) {
+            sourceCellHtml = `<td><span class="alert-badge" style="background-color: rgba(120, 104, 230, 0.1); color: var(--accent); border: 1px solid rgba(120, 104, 230, 0.3);">🧠 AI</span></td>`;
+        } else {
+            sourceCellHtml = `<td><span class="alert-badge alert-info">🛡️ Rule</span></td>`;
+        }
+
         let intelCellHtml = '<td>N/A</td>';
         if (alert.intel && alert.intel.score !== undefined) {
             let score = alert.intel.score;
             let scoreColor = score > 80 ? 'text-red-500' : score > 50 ? 'text-amber-500' : 'text-green-500';
             intelCellHtml = `<td><span class="${scoreColor} font-semibold">${score}%</span><span class="text-xs text-slate-400"> (${alert.intel.country})</span></td>`;
         }
+        
         const actionCellHtml = alert.is_blocked
             ? `<td><button class="btn btn-success action-btn" style="padding: 5px 10px; font-size: 12px;" data-ip="${alert.ip_address}" data-action="unblock"><i class="fas fa-check"></i> Unblock</button></td>`
             : `<td><button class="btn btn-danger action-btn" style="padding: 5px 10px; font-size: 12px;" data-ip="${alert.ip_address}" data-action="block"><i class="fas fa-ban"></i> Block</button></td>`;
-        newRow.innerHTML = `<td class="font-mono">${alert.ip_address}</td><td>${alert.scan_type}</td><td><span class="${severityClass}">${alert.severity}</span></td>${intelCellHtml}${actionCellHtml}`;
+        
+        // Puthu source column-ah serthu, innerHTML-ah set panrom
+        newRow.innerHTML = `<td class="font-mono">${alert.ip_address}</td><td>${alert.scan_type}</td>${sourceCellHtml}<td><span class="${severityClass}">${alert.severity}</span></td>${intelCellHtml}${actionCellHtml}`;
+        // --- MUDINJATHU ---
+
         if (detectionsTableBody.rows.length > 5) detectionsTableBody.deleteRow(-1);
     }
 });
