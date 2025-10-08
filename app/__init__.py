@@ -1,6 +1,8 @@
 from flask import Flask, render_template
 from flask_socketio import SocketIO
 from flask_login import LoginManager, login_required, current_user
+from . import auth_routes
+from . import oauth_handler
 
 
 # --- PUDHU CHANGE: Namma auth_routes file-ah import panrom ---

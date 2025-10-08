@@ -1,24 +1,37 @@
 from flask import render_template, request, redirect, url_for, flash
-from flask_login import login_user, logout_user, login_required
+from flask_login import login_user, logout_user, login_required, current_user  # Added current_user
 import bcrypt
 from .database import User # User model-ah import panrom
+from .oauth_handler import GoogleOAuthHandler  # Relative import
 
 # Intha function thaan namma authentication routes-ah create pannum
 # __init__.py file-la irunthu 'app' and 'db' object-ah inga vaangurom
 def init_auth_routes(app, db):
 
+    oauth_handler = GoogleOAuthHandler(app)
+
     @app.route('/login', methods=['GET', 'POST'])
     def login():
+        # Already logged in user-ah check panrom
+        if current_user.is_authenticated:
+            return redirect(url_for('index'))
+        
         if request.method == 'POST':
             email = request.form.get('email')
             password = request.form.get('password')
             
             if not email or not password:
-                flash('Email and password')
+                flash('Email and password required')
                 return redirect(url_for('login'))
 
             user = db.find_user_by_email(email)
 
+            # PUDHUSAA ADD PANROM: Google user-ah check panrom
+            if user and user.auth_provider == 'google':
+                flash('Intha email Google login use pannirukku. Google login use pannunga.')
+                return redirect(url_for('login'))
+                
+            # Regular password check
             if user and bcrypt.checkpw(password.encode('utf-8'), user.password_hash):
                 login_user(user)
                 return redirect(url_for('index')) # 'index' function-ku (dashboard) anuppum
@@ -27,6 +40,44 @@ def init_auth_routes(app, db):
                 return redirect(url_for('login'))
 
         return render_template('login.html')
+
+    # PUDHUSAA ADD PANROM: Google login routes
+    @app.route('/login/google')
+    def login_google():
+        """Google OAuth flow-ah start panrom"""
+        return oauth_handler.start_google_login()
+
+    @app.route('/login/google/callback')
+    def google_callback():
+        """Google OAuth callback-ah handle panrom"""
+        user_info = oauth_handler.handle_google_callback()
+        
+        if not user_info:
+            flash('Google login fail aayiduchu. Meela try pannunga.')
+            return redirect(url_for('login'))
+        
+        # Google ID vachi user irukkaa nu check panrom
+        user = db.find_user_by_google_id(user_info['google_id'])
+        
+        if not user:
+            # Email already exist aana local user-ah check panrom
+            existing_user = db.find_user_by_email(user_info['email'])
+            if existing_user:
+                flash('Intha email already local login use pannirukku. Regular login use pannunga.')
+                return redirect(url_for('login'))
+            
+            # Pudhu Google user-ah create panrom
+            user = db.add_google_user(
+                google_id=user_info['google_id'],
+                email=user_info['email'],
+                username=user_info['username'],
+                picture=user_info['picture']
+            )
+            flash('Google use panni account create aayiduchu!')
+        
+        # User-ah login panrom
+        login_user(user)
+        return redirect(url_for('index'))
 
     @app.route('/register', methods=['GET', 'POST'])
     def register():
@@ -43,8 +94,13 @@ def init_auth_routes(app, db):
             username = f"{first_name} {last_name}"
             hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())  # type: ignore
             
-            if db.find_user_by_email(email):
-                flash('Intha email already register aayirukku. Vera email use pannunga.')
+            # PUDHUSAA ADD PANROM: Google user already exist aana check panrom
+            existing_user = db.find_user_by_email(email)
+            if existing_user:
+                if existing_user.auth_provider == 'google':
+                    flash('Intha email already Google login use pannirukku. Google login use pannunga.')
+                else:
+                    flash('Intha email already register aayirukku. Vera email use pannunga.')
                 return redirect(url_for('register'))
 
             db.add_user(username, email, hashed_password)

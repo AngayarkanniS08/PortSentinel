@@ -16,6 +16,10 @@ class User(Base, UserMixin):
     email = Column(String(120), unique=True, nullable=False)
     password_hash = Column(String(120), nullable=False) # Password-ah eppovume hash panni thaan save pannanum
 
+    google_id = Column(String(100), unique=True, nullable=True)  # Google's unique user ID
+    picture = Column(String(200), nullable=True)  # Google profile picture URL
+    auth_provider = Column(String(20), default='local')  # 'local' or 'google'
+
     def __repr__(self):
         return f'<User {self.username}>'
 
@@ -74,3 +78,26 @@ class DatabaseHandler:
         user = session.query(User).get(user_id)
         session.close()
         return user
+    
+    def find_user_by_google_id(self, google_id):
+        """Find user by Google ID"""
+        session = self.Session()
+        user = session.query(User).filter_by(google_id=google_id).first()
+        session.close()
+        return user
+    
+    def add_google_user(self, google_id, email, username, picture=None):
+        """Add new user who signed up via Google"""
+        session = self.Session()
+        new_user = User(
+            google_id=google_id,
+            email=email,
+            username=username,
+            picture=picture,
+            auth_provider='google',
+            password_hash=None  # Google users don't have passwords
+        )
+        session.add(new_user)
+        session.commit()
+        session.close()
+        return new_user
