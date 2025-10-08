@@ -1,7 +1,8 @@
 from flask import Flask, render_template
 from flask_socketio import SocketIO
 from flask_login import LoginManager, login_required, current_user
-
+import subprocess
+import sys
 
 # --- PUDHU CHANGE: Namma auth_routes file-ah import panrom ---
 from .auth_routes import init_auth_routes
@@ -23,10 +24,9 @@ def create_app(sniffer=None, firewall=None, db=None, sys_monitor=None, interface
         return db.find_user_by_id(int(user_id))  # type: ignore
         
     # --- PUDHU CHANGE: Authentication routes-ah inga register panrom ---
-    # Ithu antha auth_routes.py file-la irukura ella routes-ayum activate pannidum
     init_auth_routes(app, db)
 
-    # --- Routes (Dashboard mattum thaan inga irukkum) ---
+    # --- Routes ---
     @app.route('/')
     @login_required 
     def index():
@@ -37,6 +37,11 @@ def create_app(sniffer=None, firewall=None, db=None, sys_monitor=None, interface
     def traffic_monitor():
         return render_template('traffic_monitor.html', username=current_user.username) 
 
+    @app.route('/ai_manager')
+    @login_required
+    def ai_manager():
+        return render_template('ai_manager.html', username=current_user.username)
+
     # --- Background Task Functions ---
 
     def analysis_loop(engine, sniffer_instance):
@@ -44,7 +49,6 @@ def create_app(sniffer=None, firewall=None, db=None, sys_monitor=None, interface
         print("✅ Analysis loop thread started (managed by SocketIO).")
         while sniffer_instance and sniffer_instance.is_running():
             socketio.sleep(5)
-            # Loop-kulla check panrathu innum better
             if sniffer_instance.is_running():
                 print("▶️ Running periodic analysis of collected packets...")
                 engine.analyze_and_alert()
@@ -57,7 +61,6 @@ def create_app(sniffer=None, firewall=None, db=None, sys_monitor=None, interface
         
         while sniffer and sniffer.is_running():
             socketio.sleep(1)
-            # Loop-kulla check panrathu innum better
             if not sniffer.is_running():
                 break
 
@@ -66,7 +69,11 @@ def create_app(sniffer=None, firewall=None, db=None, sys_monitor=None, interface
             last_packet_count = current_packets
             max_pps_for_load = 1000.0 
             traffic_load = min(100, int((packets_per_second / max_pps_for_load) * 100))
+            
             alerts = sniffer.engine.alert_count if sniffer.engine else 0
+            anomalies = sniffer.engine.ml_anomaly_count if sniffer.engine else 0
+            anomalies_bar_percent = min(100, int((anomalies / 10.0) * 100))
+            
             ips = len(sniffer.engine.detected_ips) if sniffer.engine else 0
             alerts_bar_percent = min(100, int((alerts / 50.0) * 100))
             ips_bar_percent = min(100, int((ips / 10.0) * 100))
@@ -74,6 +81,8 @@ def create_app(sniffer=None, firewall=None, db=None, sys_monitor=None, interface
             current_stats = {
                 'packets_processed': current_packets,
                 'alerts_triggered': alerts,
+                'anomalies_detected': anomalies,
+                'anomalies_bar_percent': anomalies_bar_percent,
                 'detected_ips_count': ips,
                 'current_traffic_pps': packets_per_second,
                 'uptime': sys_monitor.get_uptime() if sys_monitor else '0m 0s',
@@ -95,9 +104,7 @@ def create_app(sniffer=None, firewall=None, db=None, sys_monitor=None, interface
     def handle_connect():
         print('Client connected')
         if sniffer:
-            # Monitor status anupurom
             socketio.emit('monitor_status_update', {'is_running': sniffer.is_running()})
-            # PUDHU CHANGE: Threat Intel status-ayum anupurom
             if hasattr(sniffer.engine, 'threat_intel_enabled'):
                 socketio.emit('threat_intel_status_update', {'is_enabled': sniffer.engine.threat_intel_enabled})
 
@@ -114,11 +121,9 @@ def create_app(sniffer=None, firewall=None, db=None, sys_monitor=None, interface
 
         if action == 'start' and not sniffer.is_running():
             if sys_monitor: sys_monitor.start_timer()
-            # Ella background tasks-ayum inga start panrom
             socketio.start_background_task(target=sniffer._sniff_loop)
             socketio.start_background_task(target=send_stats_updates, sniffer=sniffer, sys_monitor=sys_monitor, interface_name=interface_name)
             socketio.start_background_task(target=analysis_loop, engine=sniffer.engine, sniffer_instance=sniffer)
-            # PUDHU CHANGE: Status-ah udane anupurom
             socketio.emit('monitor_status_update', {'is_running': True})
 
         elif action == 'stop' and sniffer.is_running():
@@ -140,7 +145,6 @@ def create_app(sniffer=None, firewall=None, db=None, sys_monitor=None, interface
         
         if firewall and ip_to_block:
             success = firewall.block_ip(ip_to_block)
-            # UI ku response anupurom
             socketio.emit('ip_action_status', {'success': success, 'ip': ip_to_block, 'action': 'block'})
             if success:
                 print(f"Successfully blocked {ip_to_block} via user request.")
@@ -154,11 +158,75 @@ def create_app(sniffer=None, firewall=None, db=None, sys_monitor=None, interface
         
         if firewall and ip_to_unblock:
             success = firewall.unblock_ip(ip_to_unblock)
-            # UI ku response anupurom
             socketio.emit('ip_action_status', {'success': success, 'ip': ip_to_unblock, 'action': 'unblock'})
             if success:
                 print(f"Successfully unblocked {ip_to_unblock} via user request.")
             else:
                 print(f"Failed to unblock {ip_to_unblock} via user request.")
+    
+    # --- PUTHU AI MANAGER ROUTES ---
+    @socketio.on('start_data_collection')
+    def handle_data_collection(data):
+        """Frontend-la irundhu request vandha, capture_data.py script-ah run pannum."""
+        
+        def run_script():
+            print("▶️ Starting data collection script via subprocess...")
+            try:
+                process = subprocess.Popen(
+                    [sys.executable, 'capture_data.py'], 
+                    stdout=subprocess.PIPE, 
+                    stderr=subprocess.PIPE,
+                    text=True
+                )
+                for line in iter(process.stdout.readline, ''):
+                    print(f"[Capture Script]: {line.strip()}")
+                    socketio.emit('ai_manager_status', {'message': line.strip()})
+                
+                process.wait()
+                
+                if process.returncode == 0:
+                    socketio.emit('ai_manager_status', {'message': '✅ Data Collection Finished Successfully!'})
+                else:
+                    stderr = process.stderr.read()
+                    print(f"❌ Capture Script Error: {stderr}")
+                    socketio.emit('ai_manager_status', {'message': f'❌ Error: {stderr}'})
+
+            except Exception as e:
+                print(f"❌ Failed to run capture script: {e}")
+                socketio.emit('ai_manager_status', {'message': f'❌ Failed to start script: {e}'})
+
+        socketio.start_background_task(run_script)
+
+    @socketio.on('start_model_training')
+    def handle_model_training(data):
+        """Frontend-la irundhu request vandha, trainer.py script-ah run pannum."""
+
+        def run_script():
+            print("▶️ Starting model training script via subprocess...")
+            try:
+                process = subprocess.Popen(
+                    [sys.executable, '-m', 'ml_module.trainer'],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True
+                )
+                for line in iter(process.stdout.readline, ''):
+                    print(f"[Trainer Script]: {line.strip()}")
+                    socketio.emit('ai_manager_status', {'message': line.strip()})
+                
+                process.wait()
+
+                if process.returncode == 0:
+                    socketio.emit('ai_manager_status', {'message': '🎉 AI Model Trained and Saved Successfully!'})
+                else:
+                    stderr = process.stderr.read()
+                    print(f"❌ Trainer Script Error: {stderr}")
+                    socketio.emit('ai_manager_status', {'message': f'❌ Error: {stderr}'})
+
+            except Exception as e:
+                print(f"❌ Failed to run trainer script: {e}")
+                socketio.emit('ai_manager_status', {'message': f'❌ Failed to start script: {e}'})
+
+        socketio.start_background_task(run_script)
         
     return app

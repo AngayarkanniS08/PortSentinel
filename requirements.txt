@@ -14,3 +14,8 @@ SQLAlchemy
 
 #System Utilities
 psutil
+
+# --- ML MODULE LIBRARIES (PUDHUSA ADD PANROM) ---
+pandas
+scikit-learn
+joblib

@@ -28,7 +28,19 @@
         </div>
         <p class="stat-title">Alerts vs Goal (50)</p>
     </div>
-    
+<div class="stat-card glass-card">
+        <div class="stat-header">
+            <h3 class="stat-title">Anomalies Detected (AI)</h3>
+            <div class="stat-icon icon-accent" style="background: linear-gradient(135deg, rgba(120, 104, 230, 0.2), rgba(120, 104, 230, 0.1)); color: var(--accent); box-shadow: 0 4px 20px rgba(120, 104, 230, 0.3);">
+                <i class="fas fa-brain"></i>
+            </div>
+        </div>
+        <div class="stat-value" id="anomalies-detected">0</div>
+        <div class="progress-bar">
+            <div class="progress-value" id="anomalies-progress-bar" style="width: 0%; background: var(--accent);"></div>
+        </div>
+        <p class="stat-title">AI-Powered Detections</p>
+    </div>
     <div class="stat-card glass-card">
         <div class="stat-header">
             <h3 class="stat-title">Detected IPs</h3>
@@ -96,15 +108,15 @@
         <div class="card-body">
             <div class="table-container">
                 <table>
-                    <thead>
-                        <tr>
-                            <th>IP Address</th>
-                            <th>Scan Type</th>
-                            <th>Severity</th>
-                            <th>Threat Score</th>
-                            <th>Action</th> 
-                        </tr>
-                    </thead>
+<thead>
+    <tr>
+        <th>IP Address</th>
+        <th>Scan Type</th>
+        <th>Source</th> <th>Severity</th>
+        <th>Threat Score</th>
+        <th>Action</th> 
+    </tr>
+</thead>
                     <tbody id="detections-table-body">
                         <tr><td colspan="5" class="text-center p-8 text-slate-400">No detections yet.</td></tr>
                     </tbody>
