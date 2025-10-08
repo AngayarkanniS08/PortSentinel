@@ -1,39 +1,47 @@
 import pcapy
 import sys
-from core.utils import find_active_interface
+import time # time module-ah mela import pannikonga
 
 # --- SETTINGS ---
-# Evlo neram data capture pannanum-nu inga sollunga (seconds-la)
-# Example: 1 hour = 3600 seconds. 8 hours = 28800 seconds
-CAPTURE_DURATION_SECONDS = 300  # Ippo test-ku 5 nimisham vechikalam
-
-# Enga save pannanum
+# Hardcoded time-ah remove pannitom
+# CAPTURE_DURATION_SECONDS = 300 
 OUTPUT_PCAP_FILE = 'data/normal_traffic.pcap'
 
 def main():
     """
     Normal network traffic-ah capture panni, model training-kaga oru .pcap file-la save pannum.
     """
-    # 1. Active network interface-ah thedurom
+    # --- PUTHU CHANGE: User kudutha time-ah eduthukrom ---
+    try:
+        # Command-line la irundhu varra neratha eduthukrom (default ah 300 seconds)
+        capture_duration = int(sys.argv[1]) if len(sys.argv) > 1 else 300
+    except (ValueError, IndexError):
+        print("❌ Invalid time kuduthurukeenga. Default ah 5 nimisham eduthukuren.")
+        capture_duration = 300
+    
+    # Active network interface-ah thedurom
+    # (From core.utils import find_active_interface)
+    # Note: Intha script thaniya run aagurathala, namma core module-ah theda vekkanum
+    try:
+        from core.utils import find_active_interface
+    except ImportError:
+        print("❌ Core modules-ah load panna mudiyala. Project root folder-la irundhu run panreengala nu paarunga.")
+        sys.exit(1)
+
     interface = find_active_interface()
     if not interface:
         print("❌ Active network interface kandupudika mudiyala. Check pannunga.")
         sys.exit(1)
 
-    print(f"✅'{interface}' interface-la data capture panna poren...")
-    print(f"⏳ Capture {CAPTURE_DURATION_SECONDS} seconds-ku nadakum. Please wait...")
+    print(f"✅ '{interface}' interface-la data capture panna poren...")
+    print(f"⏳ Capture {capture_duration // 60} nimisham {capture_duration % 60} seconds-ku nadakum. Please wait...")
 
     try:
-        # 2. Packet capture-ah start panrom
-        # 65536 = max packet size, 1 = promiscuous mode, 0 = no timeout
         cap = pcapy.open_live(interface, 65536, 1, 0)
-        
-        # 3. Save panrathukku oru dumper create panrom
         dumper = cap.dump_open(OUTPUT_PCAP_FILE)
 
-        # 4. Packets-ah capture panni save panrom
         packet_count = 0
-        end_time = time.time() + CAPTURE_DURATION_SECONDS
+        end_time = time.time() + capture_duration
         
         while time.time() < end_time:
             header, packet = cap.next()
@@ -48,10 +56,10 @@ def main():
     except pcapy.PcapError as e:
         print(f"\n❌ CRITICAL ERROR: {e}")
         print("sudo vechi run panni parunga: 'sudo python capture_data.py'")
+    except (KeyboardInterrupt, SystemExit):
+        print("\n⏹️ Capture cancelled by user.")
     except Exception as e:
         print(f"\nAn unexpected error occurred: {e}")
 
 if __name__ == '__main__':
-    # Namma time module-ah import pannanum
-    import time
     main()

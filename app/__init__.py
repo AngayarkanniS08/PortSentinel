@@ -11,6 +11,9 @@ from .database import User
 socketio = SocketIO(async_mode='eventlet')
 login_manager = LoginManager()
 
+# Process-ah track panrathukku oru global variable
+active_process = None
+
 def create_app(sniffer=None, firewall=None, db=None, sys_monitor=None, interface_name=None):
     app = Flask(__name__)
     app.config['SECRET_KEY'] = 'secret-key-for-port-sentinel'
@@ -164,69 +167,81 @@ def create_app(sniffer=None, firewall=None, db=None, sys_monitor=None, interface
             else:
                 print(f"Failed to unblock {ip_to_unblock} via user request.")
     
-    # --- PUTHU AI MANAGER ROUTES ---
+    # --- PUTHU AI MANAGER ROUTES (UPGRADED) ---
+    
     @socketio.on('start_data_collection')
     def handle_data_collection(data):
-        """Frontend-la irundhu request vandha, capture_data.py script-ah run pannum."""
+        """Frontend-la irundhu duration-ah vaangi, capture_data.py script-ah run pannum."""
+        global active_process
         
         def run_script():
+            global active_process
             print("▶️ Starting data collection script via subprocess...")
             try:
+                duration = data.get('duration', '300')
+                
                 process = subprocess.Popen(
-                    [sys.executable, 'capture_data.py'], 
+                    [sys.executable, 'capture_data.py', duration],
                     stdout=subprocess.PIPE, 
                     stderr=subprocess.PIPE,
                     text=True
                 )
+                active_process = process
+
                 for line in iter(process.stdout.readline, ''):
                     print(f"[Capture Script]: {line.strip()}")
                     socketio.emit('ai_manager_status', {'message': line.strip()})
                 
                 process.wait()
                 
-                if process.returncode == 0:
-                    socketio.emit('ai_manager_status', {'message': '✅ Data Collection Finished Successfully!'})
-                else:
-                    stderr = process.stderr.read()
-                    print(f"❌ Capture Script Error: {stderr}")
-                    socketio.emit('ai_manager_status', {'message': f'❌ Error: {stderr}'})
+                if process.poll() is not None:
+                    if process.returncode == 0:
+                        socketio.emit('ai_manager_status', {'message': '✅ Data Collection Finished Successfully!'})
+                    elif active_process is None:
+                        socketio.emit('ai_manager_status', {'message': '⏹️ Collection Cancelled by user.'})
+                    else:
+                        stderr = process.stderr.read()
+                        socketio.emit('ai_manager_status', {'message': f'❌ Error: {stderr}'})
+                
+                active_process = None
 
             except Exception as e:
-                print(f"❌ Failed to run capture script: {e}")
                 socketio.emit('ai_manager_status', {'message': f'❌ Failed to start script: {e}'})
+                active_process = None
 
         socketio.start_background_task(run_script)
 
     @socketio.on('start_model_training')
     def handle_model_training(data):
         """Frontend-la irundhu request vandha, trainer.py script-ah run pannum."""
-
         def run_script():
             print("▶️ Starting model training script via subprocess...")
             try:
                 process = subprocess.Popen(
                     [sys.executable, '-m', 'ml_module.trainer'],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
                 )
                 for line in iter(process.stdout.readline, ''):
                     print(f"[Trainer Script]: {line.strip()}")
                     socketio.emit('ai_manager_status', {'message': line.strip()})
-                
                 process.wait()
-
                 if process.returncode == 0:
                     socketio.emit('ai_manager_status', {'message': '🎉 AI Model Trained and Saved Successfully!'})
                 else:
                     stderr = process.stderr.read()
-                    print(f"❌ Trainer Script Error: {stderr}")
                     socketio.emit('ai_manager_status', {'message': f'❌ Error: {stderr}'})
-
             except Exception as e:
-                print(f"❌ Failed to run trainer script: {e}")
                 socketio.emit('ai_manager_status', {'message': f'❌ Failed to start script: {e}'})
-
         socketio.start_background_task(run_script)
+
+    @socketio.on('cancel_process')
+    def handle_cancel_process():
+        """Running data collection process-ah cancel pannum."""
+        global active_process
+        if active_process:
+            print("⏹️ Received cancel request. Terminating process...")
+            active_process.terminate()
+            active_process = None
+            socketio.emit('ai_manager_status', {'message': '⏹️ Cancelling... Process will stop shortly.'})
         
     return app
