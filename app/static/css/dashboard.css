@@ -1,541 +1,112 @@
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
-        :root {
-            --primary: #5a76e9; --primary-dark: #3b50c0; --secondary: #16B575; --secondary-dark: #0f8a5c;
-            --danger: #ff4757; --danger-dark: #d63031; --warning: #ff9f43; --dark-bg: #0f172a;
-            --card-bg: rgba(23, 37, 59, 0.8); --header-bg: rgba(28, 50, 84, 0.8); --accent: #7868e6; --sidebar-width: 260px;
-        }
-        * { box-sizing: border-box; }
-        body {
-            font-family: 'Inter', sans-serif; height: 100vh; color: #e2e8f0;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            position: relative; overflow: hidden; margin: 0; padding: 0;
-        }
-        body::before {
-            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at 10% 20%, rgba(86, 104, 230, 0.1) 0%, transparent 20%),
-                        radial-gradient(circle at 90% 80%, rgba(22, 181, 117, 0.1) 0%, transparent 20%);
-            z-index: -1;
-        }
-        .glass-card {
-            background: rgba(23, 37, 59, 0.7);
-            backdrop-filter: blur(16px); /* PUTHU CHANGE: Blur adhigama panniyachu */
-            -webkit-backdrop-filter: blur(16px); /* PUTHU CHANGE: Blur adhigama panniyachu */
-            border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            transition: all 0.3s ease;
-        }
-        .glass-card:hover { box-shadow: 0 8px 32px rgba(90, 118, 233, 0.2); transform: translateY(-2px); }
-        .dashboard-container { display: flex; height: 100vh; width: 100%; margin: 0 auto; }
-        .sidebar {
-            width: var(--sidebar-width); background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px);
-            border-right: 1px solid rgba(255, 255, 255, 0.1); display: flex;
-            flex-direction: column; box-shadow: 5px 0 15px rgba(0, 0, 0, 0.2); z-index: 10;
-            position: fixed; height: 100vh;
-        }
-        .sidebar-header {
-            padding: 24px;
-            /* border-bottom removed */
-        }
-        .logo { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 20px; color: white; }
-        .logo-icon {
-            width: 36px; height: 36px; background: linear-gradient(to right, var(--primary), var(--accent));
-            border-radius: 10px; display: flex; align-items: center; justify-content: center;
-        }
-        .sidebar nav {
-             flex-grow: 1; 
-        }
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 14px 24px;
-            color: #94a3b8;
-            text-decoration: none;
-            position: relative;
-            font-weight: 500;
-            overflow: hidden;
-        }
-        .nav-item.active {
-            color: white;
-            background: rgba(90, 118, 233, 0.15);
-        }
-        .nav-item.active::before {
-            content: "";
-            position: absolute;
-            left: 0;
-            top: 0;
-            height: 100%;
-            width: 4px;
-            background: linear-gradient(to bottom, var(--primary), var(--accent));
-            border-radius: 0 4px 4px 0;
-        }
-        .sidebar-footer {
-            position: absolute; 
-            bottom: 0;        
-            left: 0;          
-            width: 100%;      
-            border-top: 1px solid rgba(255, 255, 255, 0.1); 
-        }
-        .profile {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 8px;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        .profile:hover {
-            background-color: rgba(90, 118, 233, 0.1);
-        }
-        .profile-avatar {
-            width: 40px;
-            height: 40px;
-            background-color: var(--primary);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-        }
-        .profile-name {
-            font-weight: 500;
-            color: #e2e8f0;
-        }
-        .main-content {
-            flex: 1;
-            margin-left: var(--sidebar-width);
-            overflow-y: auto;
-            height: 100vh;
-            width: calc(100% - var(--sidebar-width));
-            scrollbar-width: none;
-        }
-        .main-content::-webkit-scrollbar { display: none; }
-        .dashboard-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 30px;
-            background: linear-gradient(to right, rgba(15, 23, 42, 0.7), rgba(30, 41, 59, 0.7)); /* Thirumba semi-transparent aah maathiyachu */
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-            position: sticky;
-            top: 0;
-            z-index: 50;
-        }
-        .header-title h1 { font-size: 2.25rem; font-weight: 700; color: #a9a4ff; margin: 0; text-shadow: 0 0 15px rgba(169, 164, 255, 0.6); }
-        .header-title p { color: #94a3b8; margin: 4px 0 0; font-size: 14px; }
-        .header-icon { background: var(--primary); padding: 12px; border-radius: 12px; animation: glow 2s infinite alternate; }
-        .status-indicator {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background-color: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
-            padding: 8px 16px;
-            border-radius: 12px;
-            border: 1px solid #334155;
-            transition: box-shadow 0.3s ease, border-color 0.3s ease;
-        }
-        .status-live {
-            border-color: rgba(22, 181, 117, 0.5);
-            box-shadow: 0 0 15px rgba(22, 181, 117, 0.4);
-        }
-        .status-idle {
-            border-color: rgba(255, 71, 87, 0.5);
-            box-shadow: 0 0 15px rgba(255, 71, 87, 0.4);
-        }
-        .text-live { color: var(--secondary); }
-        .text-idle { color: var(--danger); }
-        .status-dot { width: 10px; height: 10px; border-radius: 50%; transition: background-color 0.3s ease; }
-        .status-dot.blinking { animation: blink 1.5s infinite ease-in-out; }
-        @keyframes glow {
-            from { box-shadow: 0 0 5px rgba(90, 118, 233, 0.5), 0 0 10px rgba(90, 118, 233, 0.3); }
-            to { box-shadow: 0 0 15px rgba(90, 118, 233, 0.7), 0 0 20px rgba(90, 118, 233, 0.5); }
-        }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-        
-        .content-wrapper {
-            padding: 30px;
-        }
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 24px;
-            margin-bottom: 30px;
-        }        
-        .stat-card {
-            padding: 25px; border-radius: 16px; background: rgba(30, 41, 59, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-            position: relative; overflow: hidden;
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
-        }
-        .stat-card::before {
-            content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px;
-            background: linear-gradient(to right, var(--primary), var(--accent));
-        }
-        .stat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        
-        /* --- PUTHU CHANGE: Icon background-ku adhigamaana blur effect --- */
-        .stat-icon {
-            width: 50px; height: 50px; border-radius: 14px; display: flex;
-            align-items: center; justify-content: center; font-size: 22px;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-        }
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 24px;
+    margin-bottom: 30px;
+}        
+.stat-card {
+    padding: 25px; border-radius: 16px; background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    position: relative; overflow: hidden;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+.stat-card::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    background: linear-gradient(to right, var(--primary), var(--accent));
+}
+.stat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 
-        .icon-blue { 
-            background: linear-gradient(135deg, rgba(90, 118, 233, 0.2), rgba(90, 118, 233, 0.1)); 
-            color: var(--primary); 
-            box-shadow: 0 4px 20px rgba(90, 118, 233, 0.3);
-        }
-        .icon-red { 
-            background: linear-gradient(135deg, rgba(255, 71, 87, 0.2), rgba(255, 71, 87, 0.1)); 
-            color: var(--danger); 
-            box-shadow: 0 4px 20px rgba(255, 71, 87, 0.3);
-        }
-        .icon-amber { 
-            background: linear-gradient(135deg, rgba(255, 159, 67, 0.2), rgba(255, 159, 67, 0.1)); 
-            color: var(--warning); 
-            box-shadow: 0 4px 20px rgba(255, 159, 67, 0.3);
-        }
-        .icon-green { 
-            background: linear-gradient(135deg, rgba(22, 181, 117, 0.2), rgba(22, 181, 117, 0.1)); 
-            color: var(--secondary); 
-            box-shadow: 0 4px 20px rgba(22, 181, 117, 0.3);
-        }
+.stat-icon {
+    width: 50px; height: 50px; border-radius: 14px; display: flex;
+    align-items: center; justify-content: center; font-size: 22px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+.icon-blue { 
+    background: linear-gradient(135deg, rgba(90, 118, 233, 0.2), rgba(90, 118, 233, 0.1)); 
+    color: var(--primary); 
+    box-shadow: 0 4px 20px rgba(90, 118, 233, 0.3);
+}
+.icon-red { 
+    background: linear-gradient(135deg, rgba(255, 71, 87, 0.2), rgba(255, 71, 87, 0.1)); 
+    color: var(--danger); 
+    box-shadow: 0 4px 20px rgba(255, 71, 87, 0.3);
+}
+.icon-amber { 
+    background: linear-gradient(135deg, rgba(255, 159, 67, 0.2), rgba(255, 159, 67, 0.1)); 
+    color: var(--warning); 
+    box-shadow: 0 4px 20px rgba(255, 159, 67, 0.3);
+}
+.icon-green { 
+    background: linear-gradient(135deg, rgba(22, 181, 117, 0.2), rgba(22, 181, 117, 0.1)); 
+    color: var(--secondary); 
+    box-shadow: 0 4px 20px rgba(22, 181, 117, 0.3);
+}
 .stat-value {
     font-size: 32px;
     font-weight: 700;
     margin: 10px 0;
     background: linear-gradient(to right, #e2e8f0, #94a3b8);
-    -webkit-background-clip: text; /* Chrome/Safari kaga */
-    background-clip: text;         /* Vera browsers kaga (ithu thaan pudhusa add panrom) */
+    -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
 }
-        .stat-title { color: #94a3b8; font-size: 14px; font-weight: 500; }
-        .card {
-            background: rgba(23, 37, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px; overflow: hidden; margin-bottom: 30px;
-        }
-        .card-header {
-            background: linear-gradient(to right, var(--header-bg), var(--primary-dark)); padding: 20px 30px;
-            font-weight: 600; font-size: 18px; display: flex; align-items: center; gap: 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .card-body { padding: 20px; }
-        .recent-detections-card .card-body { padding: 0; }
-        .btn {
-            display: inline-flex; align-items: center; gap: 10px; padding: 12px 24px; border-radius: 12px;
-            font-weight: 500; cursor: pointer; transition: all 0.3s ease; border: none; outline: none;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        }
-        .btn-success { background: linear-gradient(to right, var(--secondary), var(--secondary-dark)); color: white; }
-        .btn-success:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(22, 181, 117, 0.4); }
-        .btn-danger { background: linear-gradient(to right, var(--danger), var(--danger-dark)); color: white; }
-        .btn-danger:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255, 71, 87, 0.4); }
-        table { width: 100%; border-collapse: collapse; }
-        th {
-            background: linear-gradient(to bottom, #334155, #1e293b); padding: 16px 20px; text-align: left;
-            font-weight: 600; color: #e2e8f0; border-bottom: 2px solid #475569; font-size: 14px;
-        }
-        td { padding: 14px 20px; border-bottom: 1px solid rgba(51, 65, 85, 0.5); font-size: 14px; }
-        tr:last-child td { border-bottom: none; }
-        tr:hover { background-color: rgba(90, 118, 233, 0.08); }
-        .alert-badge {
-            display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px;
-            font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;
-        }
-        .alert-critical { background: rgba(255, 71, 87, 0.1); color: var(--danger); border: 1px solid rgba(255, 71, 87, 0.3); }
-        .alert-warning { background: rgba(255, 159, 67, 0.1); color: var(--warning); border: 1px solid rgba(255, 159, 67, 0.3); }
-        .alert-info { background: rgba(86, 104, 230, 0.1); color: var(--accent); border: 1px solid rgba(86, 104, 230, 0.3); }
-        .proto-badge {
-            display: inline-block; padding: 4px 12px; border-radius: 12px;
-            font-size: 12px; font-weight: 500; text-align: center; min-width: 50px;
-        }
-        .proto-tcp { background-color: rgba(22, 181, 117, 0.1); color: var(--secondary); border: 1px solid rgba(22, 181, 117, 0.3); }
-        .proto-udp { background-color: rgba(120, 104, 230, 0.1); color: var(--accent); border: 1px solid rgba(120, 104, 230, 0.3); }
-        .proto-icmp { background-color: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); }
-        .proto-unknown { background-color: rgba(100, 116, 139, 0.1); color: #64748b; border: 1px solid rgba(100, 116, 139, 0.3); }
-        .progress-bar { height: 8px; background-color: rgba(51, 65, 85, 0.5); border-radius: 4px; overflow: hidden; margin-top: 12px; }
-        .progress-value { height: 100%; background: linear-gradient(to right, var(--primary), var(--secondary)); border-radius: 4px; transition: width 0.5s ease; }
-        .detection-stats-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0; }
-        .detection-stats-label { color: #cbd5e1; font-size: 16px; }
-        .detection-stats-value { font-weight: 600; color: #e2e8f0; font-size: 16px; }
-        .recent-detections-card .table-container { max-height: 230px; overflow-y: auto; scrollbar-width: none; }
-        .recent-detections-card table thead th { position: sticky; top: 0; z-index: 1; }
-        .traffic-table-container { -ms-overflow-style: none; scrollbar-width: none; }
-        .traffic-table-container::-webkit-scrollbar { display: none; }
-        .two-column-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
-        .scan-animation { display: inline-block; position: relative; width: 18px; height: 18px; }
-        .scan-red::after {
-            content: ""; position: absolute; width: 100%; height: 100%; border: 2px solid var(--danger);
-            border-radius: 50%; animation: pulse-red 1.5s ease-in-out infinite; box-shadow: 0 0 10px var(--danger);
-        }
-        .scan-green::after {
-            content: ""; position: absolute; width: 100%; height: 100%; border: 2px solid var(--secondary);
-            border-radius: 50%; animation: pulse-green 1.5s ease-in-out infinite; box-shadow: 0 0 10px var(--secondary);
-        }
-        @keyframes pulse-red { 0% { transform: scale(0.8); opacity: 0.7; } 50% { transform: scale(1.2); opacity: 0.3; } 100% { transform: scale(0.8); opacity: 0.7; } }
-        @keyframes pulse-green { 0% { transform: scale(0.8); opacity: 0.7; } 50% { transform: scale(1.2); opacity: 0.3; } 100% { transform: scale(0.8); opacity: 0.7; } }
-        
-        .filter-panel {
-            background: rgba(15, 23, 42, 0.5); padding: 16px; border-radius: 12px;
-            margin-bottom: 16px; display: flex; align-items: center;
-            justify-content: space-between; flex-wrap: wrap;
-        }
-        .filter-input, .filter-select {
-            border: 1px solid #334155; color: #e2e8f0; border-radius: 8px;
-            padding: 8px 12px; font-size: 14px;
-        }
-        .filter-input { background: #0f172a; width: 240px; }
-        .filter-select {
-            background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
-        }
-        .filter-input:focus, .filter-select:focus {
-            outline: none; border-color: var(--primary);
-            box-shadow: 0 0 0 2px rgba(90, 118, 233, 0.4);
-        }
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(5px);
-            display: flex; justify-content: center; align-items: center;
-            z-index: 1000;
-            visibility: hidden; opacity: 0;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
-        .modal-overlay.active {
-            visibility: visible; opacity: 1;
-        }
-        .modal-content {
-            background: #1e293b; padding: 24px; border-radius: 16px;
-            width: 90%; max-width: 400px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-            text-align: center;
-            transform: scale(0.95);
-            transition: transform 0.3s ease;
-        }
-        .modal-overlay.active .modal-content {
-            transform: scale(1);
-        }
-        .modal-content h3 { font-size: 20px; font-weight: 600; margin-bottom: 12px; color: white; }
-        .modal-content p { color: #94a3b8; margin-bottom: 24px; }
-        .modal-actions { display: flex; gap: 12px; justify-content: center; }
-        .btn-secondary { background-color: #334155; color: #e2e8f0; }
-        .btn-secondary:hover { background-color: #475569; }
-        
-        .profile::before { /* '.nav-item::before' removed */
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -150%;
-            width: 75%;
-            height: 100%;
-            background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0) 100%);
-            transform: skewX(-25deg);
-            transition: left 0.6s ease;
-        }
-
-        @media (max-width: 1200px) { .two-column-layout { grid-template-columns: 1fr !important; } }
-
-        /* --- PUDHU CODE: TOGGLE SWITCH-KU STYLE --- */
-        .toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 24px;
-        }
-
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ff4757; /* Red for off status */
-            transition: .4s;
-            border-radius: 24px;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 16px;
-            width: 16px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-        input:checked + .slider {
-            background-color: #16B575; /* Green for on status */
-        }
-
-        input:checked + .slider:before {
-            transform: translateX(26px);
-        }
-
-        /* --- PUDHU CODE: TOGGLE SWITCH & SHINE EFFECT-KU STYLE --- */
-        .threat-intel-toggle-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px 12px;
-            border-radius: 12px;
-            background-color: rgba(30, 41, 59, 0.7);
-            border: 1px solid #334155;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .threat-intel-toggle-container:hover {
-            border-color: rgba(120, 104, 230, 0.7);
-            box-shadow: 0 0 15px rgba(120, 104, 230, 0.5); /* Shine effect */
-        }
-
-        .toggle-label {
-            font-size: 14px;
-            font-weight: 500;
-            color: #cbd5e1;
-        }
-
-        .toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 44px; /* Chinna size */
-            height: 24px;
-        }
-
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #475569; /* Grey for off status */
-            transition: .4s;
-            border-radius: 24px;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-        input:checked + .slider {
-            background-color: var(--accent); /* Accent color for on */
-        }
-
-        input:checked + .slider:before {
-            transform: translateX(20px);
-        }
-
-        /* --- Ithu Live Update Issue-ku Fix --- */
-        /* Sila neram table update aagum bothu, UI "jump" aaguratha thadukka */
-        #packets-table-body, #detections-table-body {
-            transition: opacity 0.3s ease-in-out;
-        }
-        /* --- PUDHU UPGRADE: DROPDOWN OPTIONS MENU DESIGN (WITH BLUR & HOVER) --- */
-
-        /* Ithu antha dropdown options-oda font & background color-ah maathum */
-        .filter-select option {
-            /* PUTHU CHANGE: Blur effect theriyurathukku background konjam transparent aakrom */
-            background: rgba(30, 41, 59, 0.8); /* From #1e293b to rgba */
-            color: #e2e8f0;
-            padding: 12px 16px; /* Konjam extra space */
-
-            /* PUTHU CHANGE: Lift effect smooth-ah varathukku */
-            transition: transform 0.2s ease-out, background-color 0.2s ease-out;
-        }
-
-        /* PUTHU CHANGE: Mouse vechathum option-ah lift panni kaatum */
-        .filter-select option:hover {
-            background: rgba(90, 118, 233, 0.2); /* Hover color-ah maathrom */
-            transform: scale(1.03); /* Konjam perusa aagum */
-            cursor: pointer;
-        }
-
-        .filter-select {
-            color-scheme: dark;
-            /* PUTHU CHANGE: Dropdown box-ku blur effect add panrom */
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-        }
-
-        /* --- PUTHU UPGRADE: DEPLOY SENTINEL BUTTON-KU CYBER GLOW STYLE --- */
+.stat-title { color: #94a3b8; font-size: 14px; font-weight: 500; }
+.card {
+    background: rgba(23, 37, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px; overflow: hidden; margin-bottom: 30px;
+}
+.card-header {
+    background: linear-gradient(to right, var(--header-bg), var(--primary-dark)); padding: 20px 30px;
+    font-weight: 600; font-size: 18px; display: flex; align-items: center; gap: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.card-body { padding: 20px; }
+.recent-detections-card .card-body { padding: 0; }
+.btn-success { background: linear-gradient(to right, var(--secondary), var(--secondary-dark)); color: white; }
+.btn-success:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(22, 181, 117, 0.4); }
+table { width: 100%; border-collapse: collapse; }
+th {
+    background: linear-gradient(to bottom, #334155, #1e293b); padding: 16px 20px; text-align: left;
+    font-weight: 600; color: #e2e8f0; border-bottom: 2px solid #475569; font-size: 14px;
+}
+td { padding: 14px 20px; border-bottom: 1px solid rgba(51, 65, 85, 0.5); font-size: 14px; }
+tr:last-child td { border-bottom: none; }
+tr:hover { background-color: rgba(90, 118, 233, 0.08); }
+.alert-badge {
+    display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px;
+    font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.alert-critical { background: rgba(255, 71, 87, 0.1); color: var(--danger); border: 1px solid rgba(255, 71, 87, 0.3); }
+.alert-warning { background: rgba(255, 159, 67, 0.1); color: var(--warning); border: 1px solid rgba(255, 159, 67, 0.3); }
+.alert-info { background: rgba(86, 104, 230, 0.1); color: var(--accent); border: 1px solid rgba(86, 104, 230, 0.3); }
+.progress-bar { height: 8px; background-color: rgba(51, 65, 85, 0.5); border-radius: 4px; overflow: hidden; margin-top: 12px; }
+.progress-value { height: 100%; background: linear-gradient(to right, var(--primary), var(--secondary)); border-radius: 4px; transition: width 0.5s ease; }
+.detection-stats-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0; }
+.detection-stats-label { color: #cbd5e1; font-size: 16px; }
+.detection-stats-value { font-weight: 600; color: #e2e8f0; font-size: 16px; }
+.recent-detections-card .table-container { max-height: 230px; overflow-y: auto; scrollbar-width: none; }
+.recent-detections-card table thead th { position: sticky; top: 0; z-index: 1; }
+.two-column-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+#detections-table-body { transition: opacity 0.3s ease-in-out; }
+@media (max-width: 1200px) { .two-column-layout { grid-template-columns: 1fr !important; } }
 .btn-deploy {
-    background: linear-gradient(45deg, #10ac84, #01a3a4); /* Puthu Green Gradient */
-    color: white;
-    border: 1px solid rgba(22, 181, 117, 0.5);
-    box-shadow: 0 0 10px rgba(22, 181, 117, 0.3), 
-                inset 0 0 5px rgba(255, 255, 255, 0.2);
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden; /* Shine effect-ku ithu mukkiyam */
+    background: linear-gradient(45deg, #10ac84, #01a3a4);
+    color: white; border: 1px solid rgba(22, 181, 117, 0.5);
+    box-shadow: 0 0 10px rgba(22, 181, 117, 0.3), inset 0 0 5px rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease; position: relative; overflow: hidden;
 }
-
-.btn-deploy:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 0 20px rgba(22, 181, 117, 0.6);
-}
-
-/* Mouse vecha oru "shine" effect varum */
+.btn-deploy:hover { transform: translateY(-2px); box-shadow: 0 0 20px rgba(22, 181, 117, 0.6); }
 .btn-deploy::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -75%;
-    width: 50%;
-    height: 100%;
+    content: ''; position: absolute; top: 0; left: -75%; width: 50%; height: 100%;
     background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.25) 50%, rgba(255, 255, 255, 0) 100%);
-    transform: skewX(-25deg);
-    transition: left 0.7s ease;
+    transform: skewX(-25deg); transition: left 0.7s ease;
 }
-
-.btn-deploy:hover::before {
-    left: 125%;
-}
-
-/* Stop button-oda danger state-ku style */
+.btn-deploy:hover::before { left: 125%; }
 .btn-deploy.btn-danger {
     background: linear-gradient(45deg, #ff4757, #d63031);
     border-color: rgba(255, 71, 87, 0.5);
-    box-shadow: 0 0 10px rgba(255, 71, 87, 0.3), 
-                inset 0 0 5px rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 10px rgba(255, 71, 87, 0.3), inset 0 0 5px rgba(255, 255, 255, 0.2);
 }
-
-.btn-deploy.btn-danger:hover {
-    box-shadow: 0 0 20px rgba(255, 71, 87, 0.6);
-}
+.btn-deploy.btn-danger:hover { box-shadow: 0 0 20px rgba(255, 71, 87, 0.6); }

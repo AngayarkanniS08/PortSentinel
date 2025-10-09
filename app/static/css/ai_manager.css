@@ -1,0 +1,370 @@
+/* Main grid layout for the page */
+.ai-grid-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr; /* 2/3 and 1/3 column split */
+    gap: 24px;
+    align-items: flex-start;
+}
+
+/* General card styling */
+.card {
+    background: rgba(23, 37, 59, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 0; /* Remove default margin */
+}
+.card-header {
+    background: linear-gradient(to right, var(--header-bg), rgba(30,41,59,0.9));
+    padding: 16px 24px;
+    font-weight: 600;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.card-body {
+    padding: 24px;
+}
+
+/* Header card specific styles */
+.ai-header-card {
+    margin-bottom: 24px;
+}
+.header-icon.icon-accent {
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    background: linear-gradient(135deg, rgba(120, 104, 230, 0.2), rgba(120, 104, 230, 0.1));
+    color: var(--accent);
+    box-shadow: 0 4px 20px rgba(120, 104, 230, 0.3);
+}
+.btn-primary {
+    background: linear-gradient(to right, var(--primary), var(--accent));
+    color: white;
+}
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(90, 118, 233, 0.4);
+}
+.btn-lg {
+    padding: 14px 28px;
+    font-size: 16px;
+}
+
+/* Progress bar styling */
+.progress-bar {
+    height: 10px;
+    background-color: rgba(51, 65, 85, 0.5);
+    border-radius: 5px;
+    overflow: hidden;
+}
+.progress-value {
+    height: 100%;
+    background: linear-gradient(to right, var(--primary), var(--secondary));
+    border-radius: 5px;
+    transition: width 0.5s ease;
+}
+
+/* Table styling for model history */
+.table-container {
+    max-height: 400px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary) #1e293b;
+}
+.table-container::-webkit-scrollbar {
+    width: 8px;
+}
+.table-container::-webkit-scrollbar-track {
+    background: #1e293b;
+}
+.table-container::-webkit-scrollbar-thumb {
+    background-color: var(--primary);
+    border-radius: 4px;
+    border: 2px solid #1e293b;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+th {
+    background: linear-gradient(to bottom, #334155, #1e293b);
+    padding: 14px 20px;
+    text-align: left;
+    font-weight: 600;
+    color: #e2e8f0;
+    font-size: 14px;
+    position: sticky;
+    top: 0;
+}
+td {
+    padding: 14px 20px;
+    border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+    font-size: 14px;
+}
+tr:last-child td {
+    border-bottom: none;
+}
+tr:hover {
+    background-color: rgba(90, 118, 233, 0.08);
+}
+
+/* Badge for status in table */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+.status-active {
+    background-color: rgba(22, 181, 117, 0.1);
+    color: var(--secondary);
+}
+.status-archived {
+    background-color: rgba(100, 116, 139, 0.1);
+    color: #64748b;
+}
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+    border-radius: 8px;
+}
+
+/* Live log styling */
+.log-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 250px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary) #1e293b;
+}
+.log-item {
+    padding: 10px;
+    border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+    font-size: 13px;
+    color: #cbd5e1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: fadeIn 0.5s ease;
+}
+.log-item:last-child {
+    border-bottom: none;
+}
+.log-item.placeholder {
+    color: #64748b;
+    justify-content: center;
+}
+.log-icon {
+    color: var(--accent);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .ai-grid-layout {
+        grid-template-columns: 1fr; /* Stack columns on smaller screens */
+    }
+}
+
+/* Timer text styling */
+.timer-text {
+    font-weight: 500;
+    color: var(--warning); /* Yellow color for timer */
+    background-color: rgba(255, 159, 67, 0.1);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.timer-text i {
+    margin-right: 6px;
+}
+
+/* New Control Panel Styles */
+.control-panel-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+}
+
+.control-panel-section {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 20px;
+    height: 100%;
+}
+
+.data-capture-section {
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(15, 23, 42, 0.3); /* Slightly different bg */
+}
+
+.capture-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge.status-idle {
+    background-color: rgba(100, 116, 139, 0.2);
+    color: #94a3b8;
+}
+.status-badge.status-recording {
+    background-color: rgba(255, 71, 87, 0.2);
+    color: var(--danger);
+    animation: pulse-red-text 1.5s infinite;
+}
+
+.status-badge i {
+    font-size: 8px;
+}
+
+.capture-buttons {
+    display: flex;
+    gap: 16px;
+}
+
+.capture-buttons .btn {
+    flex: 1; /* Make buttons take equal space */
+}
+
+.btn-warning {
+    background: linear-gradient(to right, var(--warning), #f57c00);
+    color: white;
+}
+.btn-warning:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 159, 67, 0.4);
+}
+
+.btn.is-recording {
+    cursor: not-allowed;
+    background: #475569;
+    transform: none;
+    box-shadow: none;
+}
+
+.timer-container {
+    background-color: rgba(15, 23, 42, 0.8);
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 10px 16px;
+    text-align: center;
+    margin-top: 12px;
+}
+
+.timer-container span {
+    font-size: 16px;
+    font-weight: 600;
+    color: #e2e8f0;
+}
+
+#recording-timer {
+    color: var(--danger);
+    margin-left: 8px;
+    font-family: 'monospace';
+}
+
+@keyframes pulse-red-text {
+  0% { text-shadow: 0 0 5px rgba(255, 71, 87, 0.5); }
+  50% { text-shadow: 0 0 15px rgba(255, 71, 87, 1); }
+  100% { text-shadow: 0 0 5px rgba(255, 71, 87, 0.5); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .control-panel-grid {
+        grid-template-columns: 1fr; /* Stack on smaller screens */
+    }
+    .data-capture-section {
+        border-left: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+}
+
+/* Timer Input Box Styles */
+.timer-input-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(15, 23, 42, 0.5);
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+.timer-input-container .filter-input {
+    width: 120px; /* Smaller width */
+    background: #0f172a;
+    border: 1px solid #334155;
+    color: #e2e8f0;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 14px;
+}
+.timer-input-container .filter-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(90, 118, 233, 0.4);
+}
+
+/* Stop Recording Button Style */
+.btn.btn-stop-recording {
+    background: linear-gradient(to right, var(--danger), #c0392b);
+}
+.btn.btn-stop-recording:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 71, 87, 0.4);
+}
+
+/* Unique color for "Record Normal" button */
+.btn-info {
+    background: linear-gradient(to right, #3498db, #2980b9);
+    color: white;
+}
+.btn-info:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+}
+
+/* Renaming for clarity */
+.capture-input {
+    width: 120px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    color: #e2e8f0;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 14px;
+}
+.capture-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(90, 118, 233, 0.4);
+}

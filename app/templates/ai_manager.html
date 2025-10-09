@@ -2,125 +2,120 @@
 
 {% block title %}AI Manager - Port Sentinel{% endblock %}
 
+{% block styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ai_manager.css') }}">
+{% endblock %}
+
 {% block content %}
 
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    
-    <div class="card glass-card">
-        <div class="card-header">
-            <i class="fas fa-database"></i>
-            <span>Phase 1: Data Collection</span>
-        </div>
-        <div class="card-body p-6">
-            <p class="text-slate-400 mb-4">
-                "Normal" network traffic epdi irukum-nu AI model-ku solli kudukurathukku, namma mothalla konja neram data-va capture pannanum.
-            </p>
-            <p class="text-slate-400 mb-6">
-                <strong>Note:</strong> Unga network normal-ah use aagura time-la itha run pannunga.
-            </p>
-            <button id="start-collection-btn" class="btn btn-primary w-full">
-                <i class="fas fa-play-circle"></i>
-                <span>Start Data Collection (5 Mins)</span>
-            </button>
-            <div id="collection-status" class="mt-4 p-3 bg-slate-800 rounded-lg text-left text-sm text-amber-400 font-mono" style="display: none; min-height: 50px; white-space: pre-wrap; word-wrap: break-word;"></div>
+<div class="card glass-card ai-header-card">
+    <div class="card-body" style="padding: 0;">
+        <div class="control-panel-grid">
+            
+            <div class="control-panel-section">
+                <div class="flex items-center gap-4">
+                    <div class="header-icon icon-accent">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-white">AI Control Panel</h2>
+                        <p class="text-slate-400">Train models and capture live traffic data.</p>
+                    </div>
+                </div>
+                <button id="train-model-btn" class="btn btn-primary btn-lg">
+                    <i class="fas fa-cogs"></i>
+                    <span>Train New Model</span>
+                </button>
+            </div>
+
+            <div class="control-panel-section data-capture-section">
+                <div class="capture-header">
+                    <h3 class="text-lg font-semibold text-white">Live Data Capture</h3>
+                    <div id="recording-status" class="status-badge status-idle">
+                        <i class="fas fa-circle"></i>
+                        <span>IDLE</span>
+                    </div>
+                </div>
+                
+                <div class="timer-input-container">
+                    <label for="duration-input" class="text-slate-400 text-sm">Set Duration (minutes):</label>
+                    <input type="number" id="duration-input" class="capture-input" value="5" min="1" max="60">
+                </div>
+
+                <div class="capture-buttons">
+                    <button id="record-normal-btn" class="btn btn-info" data-traffic-type="normal">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Record Normal</span>
+                    </button>
+                    <button id="record-attack-btn" class="btn btn-warning" data-traffic-type="attack">
+                        <i class="fas fa-skull-crossbones"></i>
+                        <span>Record Attack</span>
+                    </button>
+                </div>
+
+                <div id="recording-timer-container" class="timer-container hidden">
+                    <span id="recording-timer-text">Time Remaining:</span>
+                    <span id="recording-timer">00:00</span>
+                </div>
+            </div>
         </div>
     </div>
+</div>
 
-    <div class="card glass-card">
-        <div class="card-header">
-            <i class="fas fa-cogs"></i>
-            <span>Phase 2: Model Training</span>
+<div class="ai-grid-layout">
+    <div class="flex flex-col gap-6">
+        <div id="training-status-container" class="card glass-card hidden">
+            <div class="card-header"><i class="fas fa-spinner fa-spin"></i> Training Status</div>
+            <div class="card-body">
+                <p id="training-status-text" class="mb-2">Initializing...</p>
+                <div class="progress-bar"><div id="training-progress-bar" class="progress-value" style="width: 0%;"></div></div>
+                <div class="flex justify-between items-center mt-2 text-sm text-slate-400">
+                    <span>Progress</span>
+                    <span id="training-timer" class="timer-text"><i class="fas fa-clock"></i> Est. Time: --:--</span>
+                </div>
+            </div>
         </div>
-        <div class="card-body p-6">
-            <p class="text-slate-400 mb-4">
-                Namma capture panna data-va vechi, puthu AI model-ah train pannalam. Ithu konja neram eduthukalam.
-            </p>
-            <p class="text-slate-400 mb-6">
-                <strong>Note:</strong> Data collection mudinjathuku aprom mattum itha seiyunga.
-            </p>
-            <button id="start-training-btn" class="btn btn-deploy w-full">
-                <i class="fas fa-brain"></i>
-                <span>Train AI Model</span>
-            </button>
-             <div id="training-status" class="mt-4 p-3 bg-slate-800 rounded-lg text-left text-sm text-green-400 font-mono" style="display: none; min-height: 50px; white-space: pre-wrap; word-wrap: break-word;"></div>
+        <div class="card glass-card">
+            <div class="card-header"><i class="fas fa-chart-line"></i> Model Training Performance</div>
+            <div class="card-body"><canvas id="training-performance-chart"></canvas></div>
+        </div>
+        <div class="card glass-card">
+            <div class="card-header"><i class="fas fa-history"></i> Model Version History</div>
+            <div class="card-body"><div class="table-container"><table><thead><tr><th>Version</th><th>Trained On</th><th>Accuracy</th><th>Status</th><th>Action</th></tr></thead><tbody id="model-history-body"><tr><td colspan="5" class="text-center p-8 text-slate-400">Loading...</td></tr></tbody></table></div></div>
+        </div>
+    </div>
+    <div class="flex flex-col gap-6">
+        <div class="card glass-card">
+            <div class="card-header"><i class="fas fa-th"></i> Prediction Analysis</div>
+            <div class="card-body"><canvas id="confusion-matrix-chart"></canvas></div>
+        </div>
+        <div class="card glass-card">
+            <div class="card-header"><i class="fas fa-star"></i> Top Threat Indicators</div>
+            <div class="card-body"><canvas id="feature-importance-chart"></canvas></div>
+        </div>
+        <div class="card glass-card">
+            <div class="card-header"><i class="fas fa-robot"></i> Live AI Detections</div>
+            <div class="card-body"><ul id="ai-detections-log" class="log-list"><li class="log-item placeholder">Waiting for detections...</li></ul></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="recording-confirmation-modal">
+    <div class="modal-content">
+        <h3 id="modal-title">Confirm Recording</h3>
+        <p id="modal-body" class="mb-4">Are you sure you want to start recording?</p>
+        <div class="text-sm text-slate-400 mb-6" id="modal-details">
+            </div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" id="cancel-recording-btn">Cancel</button>
+            <button class="btn" id="confirm-recording-btn">Confirm & Start</button>
         </div>
     </div>
 </div>
 
 {% endblock %}
 
-{% block scripts %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const socket = io();
-
-    // --- Element-ah select panrom ---
-    const collectionBtn = document.getElementById('start-collection-btn');
-    const trainingBtn = document.getElementById('start-training-btn');
-    const collectionStatusDiv = document.getElementById('collection-status');
-    const trainingStatusDiv = document.getElementById('training-status');
-
-    let isProcessRunning = false;
-
-    // --- Data Collection Button Logic ---
-    collectionBtn.addEventListener('click', function() {
-        if (isProcessRunning) {
-            alert("Oru process run aagitu irukku. Please wait.");
-            return;
-        }
-        
-        isProcessRunning = true;
-        collectionBtn.disabled = true;
-        trainingBtn.disabled = true;
-        collectionBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Collecting...</span>';
-        
-        collectionStatusDiv.style.display = 'block';
-        collectionStatusDiv.textContent = '▶️ Starting data collection...';
-        
-        // Backend-ku request anupurom
-        socket.emit('start_data_collection', {});
-    });
-
-    // --- Model Training Button Logic ---
-    trainingBtn.addEventListener('click', function() {
-        if (isProcessRunning) {
-            alert("Oru process run aagitu irukku. Please wait.");
-            return;
-        }
-        
-        isProcessRunning = true;
-        collectionBtn.disabled = true;
-        trainingBtn.disabled = true;
-        trainingBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Training...</span>';
-        
-        trainingStatusDiv.style.display = 'block';
-        trainingStatusDiv.textContent = '▶️ Starting model training...';
-
-        // Backend-ku request anupurom
-        socket.emit('start_model_training', {});
-    });
-
-    // --- Backend-la irundhu vara status messages-ah vaangi kaaturom ---
-    socket.on('ai_manager_status', function(data) {
-        const message = data.message;
-
-        if (message.includes('Collection')) {
-            collectionStatusDiv.style.display = 'block';
-            collectionStatusDiv.textContent += '\n' + message;
-        } else {
-            trainingStatusDiv.style.display = 'block';
-            trainingStatusDiv.textContent += '\n' + message;
-        }
-        
-        // Process mudinjuruchu-nu therinja, buttons-ah re-enable pannurom
-        if (message.includes('✅') || message.includes('🎉') || message.includes('❌')) {
-            isProcessRunning = false;
-            collectionBtn.disabled = false;
-            trainingBtn.disabled = false;
-            collectionBtn.innerHTML = '<i class="fas fa-play-circle"></i> <span>Start Data Collection (5 Mins)</span>';
-            trainingBtn.innerHTML = '<i class="fas fa-brain"></i> <span>Train AI Model</span>';
-        }
-    });
-});
-</script>
+{% block page_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/ai_manager.js') }}"></script>
 {% endblock %}

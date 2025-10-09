@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Port Sentinel{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    {% block styles %}{% endblock %}
 </head>
 <body>
     <div class="dashboard-container">
@@ -39,7 +39,7 @@
                 </div>
             </div>
         </aside>
-        
+
         <main class="main-content">
             <header class="dashboard-header glass-card">
                 <div class="flex items-center gap-4">
@@ -57,7 +57,7 @@
                     </div>
                 </div>
             </header>
-            
+
             <div class="content-wrapper">
                 {% block content %}
                 {% endblock %}
@@ -75,10 +75,9 @@
             </div>
         </div>
     </div>
-    
-    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
-    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 
-    {% block scripts %}{% endblock %}
+    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script> {# Common script for logout modal #}
+    {% block page_scripts %}{% endblock %}
 </body>
 </html>

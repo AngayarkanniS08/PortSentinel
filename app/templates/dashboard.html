@@ -2,6 +2,10 @@
 
 {% block title %}Dashboard - Port Sentinel{% endblock %}
 
+{% block styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
 {% block content %}
 
 <div class="stats-grid">
@@ -16,7 +20,7 @@
         </div>
         <p class="stat-title">Current traffic load</p>
     </div>
-    
+
     <div class="stat-card glass-card">
         <div class="stat-header">
             <h3 class="stat-title">Alerts Triggered</h3>
@@ -52,7 +56,7 @@
         </div>
         <p class="stat-title">IPs vs Goal (10)</p>
     </div>
-    
+
     <div class="stat-card glass-card">
         <div class="stat-header">
             <h3 class="stat-title">Current Traffic</h3>
