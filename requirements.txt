@@ -19,3 +19,10 @@ psutil
 pandas
 scikit-learn
 joblib
+numpy==1.24.3
+
+# dockerization
+bcrypt==4.0.1
+authlib==1.2.1
+Werkzeug==2.3.7
+Flask-Login==0.6.3 

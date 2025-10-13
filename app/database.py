@@ -88,6 +88,7 @@ class DatabaseHandler:
     
     def add_google_user(self, google_id, email, username, picture=None):
         """Add new user who signed up via Google"""
+        print(f"🔍 [DEBUG] Creating Google user: {email}")
         session = self.Session()
         new_user = User(
             google_id=google_id,

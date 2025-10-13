@@ -1,0 +1,23 @@
+
+
+services:
+  port-sentinel:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - FLASK_ENV=production
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    stdin_open: true    # Keep STDIN open
+    tty: true           # Allocate pseudo-TTY
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
