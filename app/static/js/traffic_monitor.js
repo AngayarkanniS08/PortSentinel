@@ -1,137 +1,164 @@
+// file: app/static/js/traffic_monitor.js
 document.addEventListener('DOMContentLoaded', function () {
-    const startStopBtn = document.getElementById('start-stop-btn');
+    // ==========================================================
+    // 1. ELEMENT SELECTIONS
+    // ==========================================================
+    const trafficStartStopBtn = document.getElementById('start-stop-btn');
     const packetsTableBody = document.getElementById('packets-table-body');
+    const ipFilter = document.getElementById('ip-filter');
     const protocolFilter = document.getElementById('protocol-filter');
     const statusFilter = document.getElementById('status-filter');
-    const ipFilter = document.getElementById('ip-filter');
-    const threatIntelToggle = document.getElementById('threat-intel-toggle');
-    const threatIntelModal = document.getElementById('threat-intel-modal');
-    const confirmThreatIntelBtn = document.getElementById('confirm-threat-intel-btn');
-    const cancelThreatIntelBtn = document.getElementById('cancel-threat-intel-btn');
-    const threatIntelModalTitle = document.getElementById('threat-intel-modal-title');
-    const threatIntelModalBody = document.getElementById('threat-intel-modal-body');
+    const statusIndicatorBox = document.getElementById('status-indicator-box');
+    const statusDot = document.getElementById('status-dot');
+    const statusText = document.getElementById('status-text');
 
+    // ==========================================================
+    // 2. STATE & SOCKET.IO SETUP
+    // ==========================================================
+    const socket = io();
     let isMonitoring = false;
-    let socket;
 
-    function connectSocket() {
-        socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port);
+    // ==========================================================
+    // 3. EVENT LISTENERS
+    // ==========================================================
 
-        socket.on('connect', () => {
-            console.log('Socket connected for traffic monitor.');
-        });
-
-        socket.on('disconnect', () => {
-            console.log('Socket disconnected from traffic monitor.');
-        });
-
-        socket.on('packet_data', function(data) {
-            updatePacketsTable(data.packets);
-        });
+    function handleStartStopClick() {
+        const action = !isMonitoring ? 'start' : 'stop';
+        socket.emit('control_monitoring', { 'action': action });
     }
 
-    function toggleMonitoring() {
-        isMonitoring = !isMonitoring;
-        const icon = startStopBtn.querySelector('i');
-        const span = startStopBtn.querySelector('span');
+    if (trafficStartStopBtn) {
+        trafficStartStopBtn.addEventListener('click', handleStartStopClick);
+    }
 
-        if (isMonitoring) {
-            startStopBtn.classList.replace('btn-success', 'btn-danger');
-            icon.classList.replace('fa-play', 'fa-stop');
-            span.textContent = 'Stop Monitor';
-            packetsTableBody.innerHTML = '<tr><td colspan="6" class="text-center p-8 text-slate-400">Monitoring... Waiting for packets.</td></tr>';
-            fetch('/start_capture', { method: 'POST' });
-            if (!socket || !socket.connected) {
-                connectSocket();
+    function applyNewFilter() {
+        if (packetsTableBody) {
+            packetsTableBody.innerHTML = `<tr><td colspan="6" class="text-center p-8 text-slate-400">Listening for packets that match your filter...</td></tr>`;
+        }
+    }
+    if (ipFilter) ipFilter.addEventListener('keyup', applyNewFilter);
+    if (protocolFilter) protocolFilter.addEventListener('change', applyNewFilter);
+    if (statusFilter) statusFilter.addEventListener('change', applyNewFilter);
+
+    // ==========================================================
+    // 4. SOCKET.IO EVENT HANDLERS
+    // ==========================================================
+    socket.on('connect', () => console.log('Connected to backend!'));
+
+    socket.on('packet_update_batch', (packet_batch) => {
+        if (!packetsTableBody) return;
+        
+        // Get current filter values
+        const ipFilterVal = ipFilter ? ipFilter.value.toLowerCase() : '';
+        const protoFilterVal = protocolFilter ? protocolFilter.value : 'ALL';
+        const statusFilterVal = statusFilter ? statusFilter.value : 'ALL';
+
+        // Filter the batch based on UI controls
+        const filtered_batch = packet_batch.filter(packet => {
+            const packet_ip = `${packet.source_ip} ${packet.dest_ip}`.toLowerCase();
+            const proto_match = protoFilterVal === 'ALL' || packet.proto.toUpperCase() === protoFilterVal;
+            const status_match = statusFilterVal === 'ALL' || packet.status === statusFilterVal;
+            const ip_match = ipFilterVal === '' || packet_ip.includes(ipFilterVal);
+            return proto_match && status_match && ip_match;
+        });
+
+        // *** ITHU THAAN PUTHU FIX ***
+        // Add the filtered packets to the table
+        filtered_batch.forEach(addPacketToTable);
+    });
+
+    socket.on('monitor_status_update', (data) => {
+        isMonitoring = data.is_running;
+        updateMonitorStatusUI(isMonitoring);
+    });
+
+    // ==========================================================
+    // 5. UI UPDATE FUNCTIONS
+    // ==========================================================
+
+    function updateMonitorStatusUI(isRunning) {
+        const scanAnimationEl = document.querySelector('.scan-animation');
+
+        if (isRunning) {
+            if (trafficStartStopBtn) {
+                trafficStartStopBtn.querySelector('i').className = 'fas fa-pause';
+                trafficStartStopBtn.querySelector('span').innerText = 'Stop Monitor';
+                trafficStartStopBtn.classList.remove('btn-success');
+                trafficStartStopBtn.classList.add('btn-danger');
             }
+            if (scanAnimationEl) {
+                scanAnimationEl.classList.remove('scan-red');
+                scanAnimationEl.classList.add('scan-green');
+            }
+            if (statusIndicatorBox) {
+                statusIndicatorBox.classList.remove('status-idle');
+                statusIndicatorBox.classList.add('status-live');
+                statusDot.className = 'status-dot bg-green-500';
+                statusText.innerText = 'Live Monitor';
+                statusText.classList.remove('text-idle');
+                statusText.classList.add('text-live');
+            }
+             if (packetsTableBody && packetsTableBody.rows.length > 0 && packetsTableBody.rows[0].cells[0].colSpan > 1) {
+                packetsTableBody.innerHTML = `<tr><td colspan="6" class="text-center p-8 text-slate-400">Listening for packets...</td></tr>`;
+            }
+
         } else {
-            startStopBtn.classList.replace('btn-danger', 'btn-success');
-            icon.classList.replace('fa-stop', 'fa-play');
-            span.textContent = 'Start Monitor';
-            fetch('/stop_capture', { method: 'POST' });
-            if (socket) {
-                socket.disconnect();
+            if (trafficStartStopBtn) {
+                trafficStartStopBtn.querySelector('i').className = 'fas fa-play';
+                trafficStartStopBtn.querySelector('span').innerText = 'Start Monitor';
+                trafficStartStopBtn.classList.remove('btn-danger');
+                trafficStartStopBtn.classList.add('btn-success');
+            }
+            if (scanAnimationEl) {
+                scanAnimationEl.classList.remove('scan-green');
+                scanAnimationEl.classList.add('scan-red');
+            }
+            if (packetsTableBody) packetsTableBody.innerHTML = `<tr><td colspan="6" class="text-center p-8 text-slate-400">Click 'Start Monitor' to see live traffic.</td></tr>`;
+            
+            if (statusIndicatorBox) {
+                statusIndicatorBox.classList.remove('status-live');
+                statusIndicatorBox.classList.add('status-idle');
+                statusDot.className = 'status-dot bg-red-500 blinking';
+                statusText.innerText = 'Monitor Idle';
+                statusText.classList.remove('text-live');
+                statusText.classList.add('text-idle');
             }
         }
     }
 
-    function updatePacketsTable(packets) {
-        if (packets.length === 0 && isMonitoring) {
-            packetsTableBody.innerHTML = '<tr><td colspan="6" class="text-center p-8 text-slate-400">No new packets detected. Monitor is active.</td></tr>';
-            return;
+    function addPacketToTable(packet) {
+        if (!packetsTableBody) return;
+        // Clear placeholder if it exists
+        if (packetsTableBody.rows.length > 0 && packetsTableBody.rows[0].cells[0].colSpan > 1) packetsTableBody.innerHTML = '';
+        
+        const newRow = packetsTableBody.insertRow(0);
+        
+        let statusBadge = '';
+        if (packet.status === 'Scan') statusBadge = '<span class="alert-badge alert-warning">Scan</span>';
+        else if (packet.status === 'Blocked') statusBadge = '<span class="alert-badge alert-critical">Blocked</span>';
+        else statusBadge = '<span class="alert-badge alert-info">Allowed</span>';
+        
+        let protoBadge = '';
+        switch (packet.proto.toUpperCase()) {
+            case 'TCP': protoBadge = '<span class="proto-badge proto-tcp">TCP</span>'; break;
+            case 'UDP': protoBadge = '<span class="proto-badge proto-udp">UDP</span>'; break;
+            case 'ICMP': protoBadge = '<span class="proto-badge proto-icmp">ICMP</span>'; break;
+            default: protoBadge = `<span class="proto-badge proto-unknown">${packet.proto}</span>`;
         }
-        if (packets.length > 0) {
-             packetsTableBody.innerHTML = '';
-        }
-
-        const protocolFilterValue = protocolFilter.value;
-        const statusFilterValue = statusFilter.value;
-        const ipFilterValue = ipFilter.value.toLowerCase();
-
-        const filteredPackets = packets.filter(packet => {
-            const protocolMatch = !protocolFilterValue || packet.protocol === protocolFilterValue;
-            const statusMatch = !statusFilterValue || packet.status === statusFilterValue;
-            const ipMatch = !ipFilterValue || packet.source_ip.toLowerCase().includes(ipFilterValue) || packet.dest_ip.toLowerCase().includes(ipFilterValue);
-            return protocolMatch && statusMatch && ipMatch;
-        });
-
-        filteredPackets.forEach((packet, index) => {
-            let statusClass = '';
-            if (packet.status === 'Blocked') {
-                statusClass = 'text-red-400';
-            } else if (packet.status === 'Allowed') {
-                statusClass = 'text-green-400';
-            } else {
-                statusClass = 'text-yellow-400';
-            }
-
-            const row = `
-                <tr>
-                    <td>${index + 1}</td>
-                    <td>${packet.timestamp}</td>
-                    <td><span class="proto-badge proto-${packet.protocol.toLowerCase()}">${packet.protocol}</span></td>
-                    <td>${packet.source_ip}</td>
-                    <td>${packet.dest_ip}</td>
-                    <td class="${statusClass}">${packet.status}</td>
-                </tr>`;
-            packetsTableBody.insertAdjacentHTML('beforeend', row);
-        });
+        
+        newRow.innerHTML = `
+            <td>${packet.sno}</td>
+            <td>${packet.time}</td>
+            <td>${protoBadge}</td>
+            <td class="font-mono">${packet.source_ip}</td>
+            <td class="font-mono">${packet.dest_ip}</td>
+            <td>${statusBadge}</td>
+        `;
+        
+        // Limit table rows to 200 for performance
+        if (packetsTableBody.rows.length > 200) packetsTableBody.deleteRow(-1);
     }
 
-    let threatIntelState = threatIntelToggle.checked;
-
-    threatIntelToggle.addEventListener('change', (e) => {
-        const isEnabled = e.target.checked;
-        threatIntelModal.classList.add('active');
-
-        if (isEnabled) {
-            threatIntelModalTitle.textContent = 'Enable Threat Intelligence';
-            threatIntelModalBody.textContent = 'This will actively block IPs from known threat lists. Are you sure?';
-            confirmThreatIntelBtn.className = 'btn btn-success';
-        } else {
-            threatIntelModalTitle.textContent = 'Disable Threat Intelligence';
-            threatIntelModalBody.textContent = 'This will stop blocking IPs from threat lists. Existing blocks may remain until cleared.';
-            confirmThreatIntelBtn.className = 'btn btn-danger';
-        }
-    });
-
-    cancelThreatIntelBtn.addEventListener('click', () => {
-        threatIntelModal.classList.remove('active');
-        threatIntelToggle.checked = threatIntelState; // Revert toggle
-    });
-
-    confirmThreatIntelBtn.addEventListener('click', () => {
-        threatIntelState = threatIntelToggle.checked;
-        fetch('/toggle_threat_intel', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ enabled: threatIntelState })
-        });
-        threatIntelModal.classList.remove('active');
-    });
-
-    startStopBtn.addEventListener('click', toggleMonitoring);
-    protocolFilter.addEventListener('change', () => fetch('/get_packets').then(res => res.json()).then(data => updatePacketsTable(data.packets)));
-    statusFilter.addEventListener('change', () => fetch('/get_packets').then(res => res.json()).then(data => updatePacketsTable(data.packets)));
-    ipFilter.addEventListener('input', () => fetch('/get_packets').then(res => res.json()).then(data => updatePacketsTable(data.packets)));
+    // Initial check on load
+    socket.emit('get_monitor_status');
 });

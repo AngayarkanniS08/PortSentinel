@@ -121,8 +121,8 @@
         <th>Action</th> 
     </tr>
 </thead>
-                    <tbody id="detections-table-body">
-                        <tr><td colspan="5" class="text-center p-8 text-slate-400">No detections yet.</td></tr>
+                   <tbody id="detections-table-body">
+                        <tr><td colspan="6" class="text-center p-8 text-slate-400">No detections yet.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -141,4 +141,8 @@
     </div>
 </div>
 
+{% endblock %}
+
+{% block scripts %}
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 {% endblock %}

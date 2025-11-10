@@ -5,7 +5,7 @@ import time
 from collections import defaultdict, deque
 from .threat_intelligence import ThreatIntel
 # --- PUTHU CHANGE: Namma AI Predictor-ah import panrom ---
-#from ml_module.predictor import predictor
+from ml_module.predictor import predictor
 
 # Intha class, packets ah oru kuripitta nerathuku save panni vechik yardımcı pannum.
 class SlidingWindow:
@@ -46,7 +46,7 @@ class DetectionEngine:
         self.thresholds = thresholds # Puthu thresholds use panrom
         
         # --- PUTHU CHANGE: Namma AI model-ah inga ready panrom ---
-        self.predictor = None
+        self.predictor = predictor
         
         # Data structures for tracking packets
         self.win = SlidingWindow(self.thresholds.get('max_time_window', 30))
