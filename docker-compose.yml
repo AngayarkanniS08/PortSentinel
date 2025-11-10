@@ -1,23 +1,30 @@
-
+version: '3.8'
 
 services:
   port-sentinel:
     build: .
-    ports:
-      - "5000:5000"
+    image: portsentinel:latest
+    container_name: portsentinel-app
+    
+    # --- IDHU DHAN MUKHYAMANA FIX ---
+    # Unga real network-ah use panna sollum
+    network_mode: "host"
+    
+    # Firewall (iptables) control panna permission kudukum
+    privileged: true
+    # ------------------------------------
+    
+    # 'host' network mode-la 'ports' theva illa
+    # ports:
+    #   - "5000:5000" 
+
     volumes:
-      - ./data:/app/data
+      # Unga database 'instance' folder-la save aagum
+      - ./instance:/app/instance
+    
     environment:
       - FLASK_ENV=production
-    cap_add:
-      - NET_ADMIN
-      - NET_RAW
-    stdin_open: true    # Keep STDIN open
-    tty: true           # Allocate pseudo-TTY
+    
+    stdin_open: true
+    tty: true
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s

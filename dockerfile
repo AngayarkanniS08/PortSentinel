@@ -31,7 +31,7 @@ COPY . .
 RUN mkdir -p /app/data
 
 RUN useradd -m -s /bin/bash sentinel && chown -R sentinel:sentinel /app
-USER sentinel
+#USER sentinel
 
 EXPOSE 5000
 
