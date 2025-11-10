@@ -6,8 +6,7 @@ from core.engine import DetectionEngine
 from app.database import DatabaseHandler
 from core.firewall import FirewallManager
 from core.utils import SystemMonitor, find_active_interface
-
-
+from config import Config # <-- PUDHUSA IMPORT PANROM
 
 def main():
     """
@@ -15,7 +14,10 @@ def main():
     """
     print("🚀 Initializing Port Sentinel components...")
 
-    db_handler = DatabaseHandler('sentinel.db')
+    # PALA PASAM 'sentinel.db' NU IRUNDHUCHU
+    # PUTHUSA 'Config.DATABASE_URI' VAZIYA CORRECT PATH-AH EDKKROM
+    db_handler = DatabaseHandler(Config.DATABASE_URI)
+    
     firewall_manager = FirewallManager()
     system_monitor = SystemMonitor()
     
@@ -33,9 +35,7 @@ def main():
         "min_syn_ratio": 0.60,       # 60%-ku mela SYN packets irundha SYN scan
         
         # UDP Scan Specific
-        "min_icmp_unreach": 3,       # Minimum 3 "Port Unreachable" message vandha UDP scan
-        
-        # Ping Sweep Specific
+        "min_icmp_unreach": 3,       # Minimum 3 "Port Unreachable" message...ing Sweep Specific
         "min_icmp_targets": 6,       # 6 different IP-ku mela ping panna, adhu Ping Sweep
     }
 
@@ -74,7 +74,7 @@ def main():
         if packet_sniffer.is_running():
             packet_sniffer.stop()
     finally:
-        print("👋 Goodbye!")
+        print("Cleanup complete. Goodbye!")
 
 if __name__ == '__main__':
     main()

@@ -1,24 +1,22 @@
+
 import datetime
+import os # <-- PUDHUSA IMPORT PANROM
 from sqlalchemy import create_engine, Column, Integer, String, DateTime
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from flask_login import UserMixin # PUDHUSA IMPORT PANROM
+from flask_login import UserMixin 
 
-# 'declarative_base' thaan namma table models create panna uthavum
 Base = declarative_base()
 
-# PUDHUSA USER TABLE MODEL-AH ADD PANROM
-# UserMixin, Flask-Login kooda sernthu user session-ah manage pannum
 class User(Base, UserMixin):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
     username = Column(String(80), unique=True, nullable=False)
     email = Column(String(120), unique=True, nullable=False)
-    password_hash = Column(String(120), nullable=False) # Password-ah eppovume hash panni thaan save pannanum
-
-    google_id = Column(String(100), unique=True, nullable=True)  # Google's unique user ID
-    picture = Column(String(200), nullable=True)  # Google profile picture URL
-    auth_provider = Column(String(20), default='local')  # 'local' or 'google'
+    password_hash = Column(String(120), nullable=True) # Google user kaga nullable=True
+    google_id = Column(String(100), unique=True, nullable=True)
+    picture = Column(String(200), nullable=True)
+    auth_provider = Column(String(20), default='local')
 
     def __repr__(self):
         return f'<User {self.username}>'
@@ -36,9 +34,27 @@ class DatabaseHandler:
     Manages all database operations for the application.
     """
     def __init__(self, db_file):
-        # Correct aana format: f'sqlite:///{db_file}'
-        self.engine = create_engine(f'sqlite:///{db_file}')
-        Base.metadata.create_all(self.engine)
+        
+        # --- PUDHU FIX INGA START AAGUTHU ---
+        # Namma 'init_db.py' la panra maariye, ingayum directory ah check panrom
+        
+        if db_file.startswith('sqlite:///'):
+            db_uri = db_file
+            db_path = db_uri.replace('sqlite:///', '')
+        else:
+            db_uri = f'sqlite:///{db_file}'
+            db_path = db_file
+        
+        # Database file oda directory ah create panrom (illana)
+        # Idhu thaan antha 'sudo' path problem ah solve pannum
+        db_dir = os.path.dirname(db_path)
+        if db_dir and not os.path.exists(db_dir):
+            print(f"DatabaseHandler: Creating directory: {db_dir}")
+            os.makedirs(db_dir)
+        # --- FIX MUDINJIRUCHU ---
+
+        self.engine = create_engine(db_uri)
+        Base.metadata.create_all(self.engine) # Ippo idhu fail aagadhu
         self.Session = sessionmaker(bind=self.engine)
 
     def add_detection(self, ip, scan_type, severity):
@@ -53,12 +69,12 @@ class DatabaseHandler:
         session.close()
         print(f"New detection logged for IP: {ip}")
 
-    # --- USER MANAGEMENT FUNCTIONS (PUDHUSA ADD PANROM) ---
+    # --- USER MANAGEMENT FUNCTIONS ---
 
     def add_user(self, username, email, hashed_password):
         """Pudhu user-ah database-la add pannum."""
         session = self.Session()
-        new_user = User(username=username, email=email, password_hash=hashed_password)
+        new_user = User(username=username, email=email, password_hash=hashed_password, auth_provider='local')
         session.add(new_user)
         session.commit()
         session.close()
@@ -74,7 +90,6 @@ class DatabaseHandler:
     def find_user_by_id(self, user_id):
         """User ID vachi user-ah thedum (Login manager use pannum)."""
         session = self.Session()
-        # .get() function primary key vachi thedradhuku use aagum, romba fast
         user = session.query(User).get(user_id)
         session.close()
         return user
@@ -96,9 +111,12 @@ class DatabaseHandler:
             username=username,
             picture=picture,
             auth_provider='google',
-            password_hash=None  # Google users don't have passwords
+            password_hash=None
         )
         session.add(new_user)
         session.commit()
+        
+        # Commit pannathukku appuram user ah return pannurom
+        created_user = session.query(User).filter_by(google_id=google_id).first()
         session.close()
-        return new_user
+        return created_user
