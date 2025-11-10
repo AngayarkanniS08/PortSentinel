@@ -4,8 +4,6 @@ import socket
 import time
 from collections import defaultdict, deque
 from .threat_intelligence import ThreatIntel
-# --- PUTHU CHANGE: Namma AI Predictor-ah import panrom ---
-from ml_module.predictor import predictor
 
 # Intha class, packets ah oru kuripitta nerathuku save panni vechik yardımcı pannum.
 class SlidingWindow:
@@ -45,9 +43,6 @@ class DetectionEngine:
         self.socketio = socketio
         self.thresholds = thresholds # Puthu thresholds use panrom
         
-        # --- PUTHU CHANGE: Namma AI model-ah inga ready panrom ---
-        self.predictor = predictor
-        
         # Data structures for tracking packets
         self.win = SlidingWindow(self.thresholds.get('max_time_window', 30))
         self.tcp = defaultdict(lambda: defaultdict(list))
@@ -57,7 +52,6 @@ class DetectionEngine:
         self.start_ts = time.time()
         self.report_times = {}  # To avoid spamming alerts
         self.alert_count = 0
-        self.ml_anomaly_count = 0
         self.detected_ips = set()
         self.threat_intel_enabled = False
         ABUSEIPDB_API_KEY = "c8aba3b6eb35cdbc110bbde4ee84e3dac9cbed1d93c5ce9f4cad596fe618fc975abd88306c988a99" # <-- UNGA API KEY-AH INGA PODUNGA
@@ -91,20 +85,6 @@ class DetectionEngine:
                 src_ip = socket.inet_ntoa(ip.src) # type: ignore
                 dst_ip = socket.inet_ntoa(ip.dst) # type: ignore
                 
-                # --- PUTHU CHANGE: AI kitta theerpu kekurom ---
-                if self.predictor.is_anomaly(raw_packet):
-                    # AI "ithu anomaly" nu sonna, udane alert anupurom
-                    self.trigger_alert(src_ip, 'ML Anomaly', 'Medium', [])
-                    # Inga packet info return panrathunala, UI la "Scan" nu kaatum
-                    return {
-                        'sno': sno,
-                        'time': datetime.datetime.now().strftime('%H:%M:%S'),
-                        'proto': ip.data.__class__.__name__,
-                        'source_ip': src_ip,
-                        'dest_ip': dst_ip,
-                        'status': 'Scan' # AI kandupudichathala "Scan" status kudukrom
-                    }
-
                 if isinstance(ip.data, dpkt.udp.UDP):
                     udp = ip.data
                     if udp.dport == 53 or udp.sport == 53: # type: ignore
@@ -200,22 +180,11 @@ class DetectionEngine:
             Helper function to create and send alerts with threat intel.
             (ML and Rule based alerts-ku thani thani cool-down vechi, alert-ah anupum).
             """
-            # --- PUTHU UPGRADE: ML vs RULE ALERT-ku Thani Thani Cool-down ---
-            
-            # 1. Alert ML model-la irundhu vandha, count-ah adhigamaakki, 5 nimisham cool-down vekkanum
-            if scan_type == 'ML Anomaly':
-                key = (src_ip, scan_type)
-                # Ore IP-la irundhu adutha 5 nimishathuku ML alert vandha, ignore pannu
-                if time.time() - self.report_times.get(key, 0) < 300: # 300 seconds = 5 minutes
-                    return
-                self.ml_anomaly_count += 1 # AI kandupudicha count-ah ethrom
-            
-            # 2. Illana, ithu rule-based alert. Pazhaya maathiri 1 nimisham cool-down pothum
-            else:
-                key = (src_ip, scan_type)
-                # Ore IP-la irundhu adutha 1 nimishathuku rule alert vandha, ignore pannu
-                if time.time() - self.report_times.get(key, 0) < 60: # 60 seconds = 1 minute
-                    return
+            # Rule-based alert-ku 1 nimisham cool-down pothum
+            key = (src_ip, scan_type)
+            # Ore IP-la irundhu adutha 1 nimishathuku rule alert vandha, ignore pannu
+            if time.time() - self.report_times.get(key, 0) < 60: # 60 seconds = 1 minute
+                return
 
             # --- Matha logic-lam apdiye thaan irukum ---
             
